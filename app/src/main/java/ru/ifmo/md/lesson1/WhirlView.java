@@ -100,11 +100,12 @@ class WhirlView extends SurfaceView implements Runnable {
         field = field2;
     }
 
+    Paint paint = new Paint();
+
     @Override
     public void onDraw(Canvas canvas) {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
                 paint.setColor(palette[field[x][y]]);
                 canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
             }
