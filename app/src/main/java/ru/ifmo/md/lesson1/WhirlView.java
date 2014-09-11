@@ -13,12 +13,13 @@ import java.util.Random;
 * Created by thevery on 11/09/14.
 */
 class WhirlView extends SurfaceView implements Runnable {
+    Paint paint = new Paint();
     int [][] field = null;
     int width = 0;
     int height = 0;
     int scale = 4;
     final int MAX_COLOR = 10;
-    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    int[] palette = {0xFFFFE4C4, 0xFFFFF0F5, 0xFF6495ED, 0xFFAFEEEE, 0xFF20B2AA, 0xFFADFF2F, 0xFFFFD700, 0xFFCD5C5C, 0xFFFF69B4, 0xFF8A2BE2};
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -45,10 +46,10 @@ class WhirlView extends SurfaceView implements Runnable {
         while (running) {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
-                Canvas canvas = holder.lockCanvas();
-                updateField();
-                onDraw(canvas);
-                holder.unlockCanvasAndPost(canvas);
+                Canvas canvas = holder.lockCanvas(); // takes 2
+                updateField();                       // takes 14
+                onDraw(canvas);                      // takes 24
+                holder.unlockCanvasAndPost(canvas);  // takes 40
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
                 try {
@@ -104,7 +105,6 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onDraw(Canvas canvas) {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
                 paint.setColor(palette[field[x][y]]);
                 canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
             }
