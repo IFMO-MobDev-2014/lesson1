@@ -1,8 +1,8 @@
 package ru.ifmo.md.lesson1;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -14,20 +14,27 @@ import java.util.Random;
 class WhirlView extends SurfaceView implements Runnable {
     final static String TAG = "WhirlView";
 
-    final static int FIELD_WIDTH = 240;
-    final static int FIELD_HEIGHT = 320;
+    private static final int WIDTH = 240;
+    private static final int HEIGHT = 320;
 
-    Bitmap bitmap = null;
-    float scaleWidth = 1f;
-    float scaleHeight = 1f;
-    int width = FIELD_WIDTH;
-    int height = FIELD_HEIGHT;
+    private float scaleWidth = 1f;
+    private float scaleHeight = 1f;
+    private int width = WIDTH;
+    private int height = HEIGHT;
 
-    int [][] field = null;
-    int [][] field2 = null;
-    Paint paint = null;
-    final int MAX_COLOR = 10;
-    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    private int[][] field = new int[width][height];
+    private int[][] tmpField = new int[width][height];
+    private int[] pixels = new int[width * height];
+
+    private static final int MAX_COLORS = 20;
+    private int[] palette = null;
+
+    private Paint paint = null;
+    private long lastFpsUpdate;
+    private long FPS_UPDATE_INTERVAL = 1000;
+    private float fps;
+    private int framesDrawn = 0;
+
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -35,7 +42,8 @@ class WhirlView extends SurfaceView implements Runnable {
     public WhirlView(Context context) {
         super(context);
         holder = getHolder();
-        bitmap = Bitmap.createBitmap(FIELD_WIDTH, FIELD_HEIGHT, Bitmap.Config.ARGB_4444);
+        initField();
+        initPalette();
     }
 
     public void resume() {
@@ -52,25 +60,13 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     public void run() {
-        int framesDrawn = 0;
-        long lastTime = System.currentTimeMillis();
         while (running) {
+            updateField();
+            recalcFps();
             if (holder.getSurface().isValid()) {
                 Canvas canvas = holder.lockCanvas();
-                updateField();
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
-                framesDrawn++;
-                long curTime = System.currentTimeMillis();
-                long diffTime = curTime - lastTime;
-                if (diffTime > 1000) {
-                    Log.i(TAG, "FPS: " + framesDrawn);
-                    framesDrawn = 0;
-                    lastTime = curTime;
-                }
-                try {
-                    Thread.sleep(16);
-                } catch (InterruptedException ignore) {}
             }
         }
     }
@@ -78,57 +74,84 @@ class WhirlView extends SurfaceView implements Runnable {
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         Log.i(TAG, "onSizeChanged: " + w + " " + h + " " + oldW + " " + oldH);
-        scaleWidth = (float)w / FIELD_WIDTH;
-        scaleHeight = (float)h / FIELD_HEIGHT;
-        initField();
+        scaleWidth = (float)w / WIDTH;
+        scaleHeight = (float)h / HEIGHT;
+    }
+
+    void initPalette() {
+        palette = new int[MAX_COLORS];
+        float f1 = 1.4f, f2 = 1.4f, f3 = 1.4f;
+        int p1 = 0, p2 = 2, p3 = 4;
+        int w = 128, center = 127;
+        for (int i = 0; i < MAX_COLORS; i++) {
+            int red = (int) (Math.sin(f1 * i + p1) * w + center);
+            int green = (int) (Math.sin(f2 * i + p2) * w + center);
+            int blue = (int) (Math.sin(f3 * i + p3) * w + center);
+            Log.i(TAG, red + " " + green + " " + blue);
+            palette[i] = Color.rgb(red, green, blue);
+        }
+        paint = new Paint();
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(30);
     }
 
     void initField() {
-        paint = new Paint();
-        field = new int[width][height];
-        field2 = new int [width][height];
-        Random rand = new Random();
+        Random rand = new Random(742689);
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                field[x][y] = rand.nextInt(MAX_COLOR);
+                field[x][y] = rand.nextInt(MAX_COLORS);
             }
         }
     }
 
     void updateField() {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-
-                field2[x][y] = field[x][y];
-
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                tmpField[x][y] = field[x][y];
+                boolean changed = false;
+                for (int dx = -1; !changed && dx <= 1; dx++) {
+                    for (int dy = -1; !changed && dy <= 1; dy++) {
                         int x2 = x + dx;
                         int y2 = y + dy;
                         if (x2 < 0) x2 += width;
                         if (y2 < 0) y2 += height;
                         if (x2 >= width) x2 -= width;
                         if (y2 >= height) y2 -= height;
-                        if ( (field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
-                            field2[x][y] = field[x2][y2];
+                        int color = field[x][y] + 1;
+                        if (color == MAX_COLORS) color = 0;
+                        if (color == field[x2][y2]) {
+                            tmpField[x][y] = field[x2][y2];
+                            changed = true;
                         }
                     }
                 }
             }
         }
-        int [][] tmp = field;
-        field = field2;
-        field2 = tmp;
+        int[][] tmp = field;
+        field = tmpField;
+        tmpField = tmp;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                pixels[x * width + y] = palette[field[x][y]];
+            }
+        }
+    }
+
+    void recalcFps() {
+        framesDrawn++;
+        long now = System.currentTimeMillis();
+        long elapsed = now - lastFpsUpdate;
+        if (elapsed > FPS_UPDATE_INTERVAL) {
+            fps = (float)framesDrawn * FPS_UPDATE_INTERVAL / elapsed;
+            framesDrawn = 0;
+            lastFpsUpdate = now;
+        }
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                bitmap.setPixel(x, y, palette[field[x][y]]);
-            }
-        }
         canvas.scale(scaleWidth, scaleHeight);
-        canvas.drawBitmap(bitmap, 0, 0, paint);
+        canvas.drawBitmap(pixels, 0, width, 0, 0, width, height, false, null);
+        canvas.drawText("FPS: " + String.format("%.1f", fps), 10, 25, paint);
     }
 }
