@@ -3,6 +3,7 @@ package ru.ifmo.md.lesson1;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.util.Log;
 import android.view.SurfaceView;
 
@@ -13,6 +14,7 @@ import java.util.TimerTask;
 * Created by thevery on 11/09/14.
 */
 class WhirlView extends SurfaceView {
+    public static final int SCALE = 4;
     static final String TAG = "WhirlView";
     public static volatile boolean running = false;
     Bitmap toDraw;
@@ -20,23 +22,26 @@ class WhirlView extends SurfaceView {
     Thread updater, drawer;
     Timer showTimer;
     FPSLogger perfLog;
+    Matrix matrix;
 
     public WhirlView(Context context) {
         super(context);
+        matrix = new Matrix();
+        matrix.setScale(SCALE, SCALE);
     }
 
     public void resume() {
         if (getWidth() == 0 || getHeight() == 0)
             return;
         running = true;
-        FieldUpdater updaterRunnable = new FieldUpdater(getWidth() / FieldDrawer.SCALE, getHeight() / FieldDrawer.SCALE);
+        FieldUpdater updaterRunnable = new FieldUpdater(getWidth() / SCALE, getHeight() / SCALE);
         drawerRunnable = new FieldDrawer(updaterRunnable, getWidth(), getHeight());
         updater = new Thread(updaterRunnable);
         drawer = new Thread(drawerRunnable);
         updater.start();
         drawer.start();
         showTimer = new Timer();
-        showTimer.schedule(new DisplayTask(), 0, 16);
+        showTimer.schedule(new DisplayTask(), 0, 12);
         perfLog = new FPSLogger();
         showTimer.schedule(perfLog, 0, 1000);
     }
@@ -59,6 +64,7 @@ class WhirlView extends SurfaceView {
     @Override
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        canvas.concat(matrix);
         if (toDraw != null)
             canvas.drawBitmap(toDraw, 0, 0, null);
     }

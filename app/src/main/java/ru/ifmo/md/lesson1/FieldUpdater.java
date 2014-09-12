@@ -46,23 +46,20 @@ public class FieldUpdater implements Runnable {
         while (WhirlView.running) {
             int[][] field2 = new int[width][height];
             for (int x=0; x<width; x++) {
+                System.arraycopy(field[x], 0, field2[x], 0, field[x].length);
                 for (int y=0; y<height; y++) {
-
-                    field2[x][y] = field[x][y];
-
-                    for (int dx=-1; dx<=1; dx++) {
-                        for (int dy=-1; dy<=1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++)
+                        for (int dy = -1; dy <= 1; dy++) {
                             int x2 = x + dx;
                             int y2 = y + dy;
-                            if (x2<0) x2 += width;
-                            if (y2<0) y2 += height;
-                            if (x2>=width) x2 -= width;
-                            if (y2>=height) y2 -= height;
-                            if ( (field[x][y]+1) % FieldDrawer.MAX_COLOR == field[x2][y2]) {
+                            if (x2 < 0) x2 += width;
+                            if (y2 < 0) y2 += height;
+                            if (x2 >= width) x2 -= width;
+                            if (y2 >= height) y2 -= height;
+                            if ((field[x][y] + 1) % FieldDrawer.MAX_COLOR == field[x2][y2]) {
                                 field2[x][y] = field[x2][y2];
                             }
                         }
-                    }
                 }
             }
             try {

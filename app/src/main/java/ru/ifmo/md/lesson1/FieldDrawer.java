@@ -13,7 +13,6 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 public class FieldDrawer implements Runnable {
     public static final int MAX_COLOR = 10;
-    public static final int SCALE = 4;
 
     static final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     //static final int[] palette = {0b1111100000000000, 0b1000000000000000, 0b1000010000000000, 0b0000010000000000,
@@ -33,10 +32,10 @@ public class FieldDrawer implements Runnable {
 
     public FieldDrawer(FieldUpdater updater, int width, int height) {
         this.updater = updater;
-        this.bitmap = Bitmap.createBitmap(width / SCALE, height / SCALE, Bitmap.Config.ARGB_8888);
+        this.bitmap = Bitmap.createBitmap(width / WhirlView.SCALE, height / WhirlView.SCALE, Bitmap.Config.ARGB_8888);
         this.canvas = new Canvas(bitmap);
         this.rect = new Rect();
-        this.points = new float[MAX_COLOR][(width / SCALE) * (height / SCALE) * 2];
+        this.points = new float[MAX_COLOR][(width / WhirlView.SCALE) * (height / WhirlView.SCALE) * 2];
         this.ind = new int[MAX_COLOR];
     }
 
@@ -65,7 +64,8 @@ public class FieldDrawer implements Runnable {
                 canvas.drawPoints(points[i], 0, ind[i], paint);
             }
             try {
-                queue.put(Bitmap.createScaledBitmap(bitmap, bitmap.getWidth() * SCALE, bitmap.getHeight() * SCALE, false));
+                //queue.put(Bitmap.createScaledBitmap(bitmap, bitmap.getWidth() * WhirlView.SCALE, bitmap.getHeight() * WhirlView.SCALE, false));
+                queue.put(Bitmap.createBitmap(bitmap));
             } catch (InterruptedException ignore) {
                 Log.e(TAG, "Could not put the bitmap into the queue");
             }
