@@ -21,6 +21,9 @@ class WhirlView extends SurfaceView implements Runnable {
     int height = 320;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    Rect initRect;
+    Rect deviceRect;
+    Bitmap b;
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -77,6 +80,8 @@ class WhirlView extends SurfaceView implements Runnable {
                 field[x][y] = rand.nextInt(MAX_COLOR);
             }
         }
+        initRect = new Rect(0,0,width-1,height-1);
+        deviceRect = new Rect(0,0,deviceWidth-1,deviceHeight-1);
     }
 
     void updateField() {
@@ -113,7 +118,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 colors[c++] = palette[field[x][y]];
             }
         }
-        Bitmap b = Bitmap.createBitmap(colors, width, height, Bitmap.Config.RGB_565);
-        canvas.drawBitmap(b, new Rect(0,0,width-1,height-1), new Rect(0,0,deviceWidth-1,deviceHeight-1), null);
+        b = Bitmap.createBitmap(colors, width, height, Bitmap.Config.RGB_565);
+        canvas.drawBitmap(b, initRect, deviceRect, null);
     }
 }
