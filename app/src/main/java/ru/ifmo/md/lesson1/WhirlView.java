@@ -10,9 +10,7 @@ import android.view.SurfaceView;
 
 import java.util.Random;
 
-/**
-* Created by thevery on 11/09/14.
-*/
+
 class WhirlView extends SurfaceView implements Runnable {
     final static String TAG = "WhirlView";
 
@@ -130,7 +128,6 @@ class WhirlView extends SurfaceView implements Runnable {
                 bitmap.setPixel(x, y, palette[field[x][y]]);
             }
         }
-        //canvas.drawBitmap(bitmap, rectSrc, rectDst, paint);
         canvas.scale(scaleWidth, scaleHeight);
         canvas.drawBitmap(bitmap, 0, 0, paint);
     }
