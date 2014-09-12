@@ -1,20 +1,36 @@
 apply plugin: 'com.android.application'
-
 android {
+    signingConfigs {
+        config {
+            keyAlias 'flyingleafe'
+            keyPassword '145236'
+            storeFile file('/Users/flyingleafe/android.jks')
+            storePassword '145236'
+        }
+        unsigned {
+            // nothing
+        }
+    }
     compileSdkVersion 19
-    buildToolsVersion "20.0.0"
-
+    buildToolsVersion '20.0.0'
     defaultConfig {
-        applicationId "ru.ifmo.md.lesson1"
+        applicationId 'ru.ifmo.md.lesson1'
         minSdkVersion 15
         targetSdkVersion 19
         versionCode 1
-        versionName "1.0"
+        versionName '1.0'
     }
     buildTypes {
         release {
             runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        unsigned {
+            versionNameSuffix '-unsigned'
+        }
     }
+    productFlavors {
+    }
+}
+dependencies {
 }
