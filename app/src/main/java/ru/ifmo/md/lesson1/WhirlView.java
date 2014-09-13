@@ -101,10 +101,10 @@ class WhirlView extends SurfaceView implements Runnable {
                         if (y2>=height) y2 -= height;
                         if ( (field[x][y][step]+1) % MAX_COLOR == field[x2][y2][step]) {
                             field[x][y][nstep] = field[x2][y2][step];
-                            bmap.setPixel(x,y,palette[field[x][y][nstep]]);
                         }
                     }
                 }
+                bmap.setPixel(x,y,palette[field[x][y][nstep]]);
             }
         }
         step = nstep;
