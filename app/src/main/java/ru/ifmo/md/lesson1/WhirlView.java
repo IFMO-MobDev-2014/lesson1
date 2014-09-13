@@ -52,8 +52,8 @@ class WhirlView extends SurfaceView implements Runnable {
                 long startTime = System.nanoTime();
                 canvas = holder.lockCanvas();
 
-                updateField();  // 25ms
-                onDraw(canvas); //~45ms
+                updateField();
+                canvas.drawBitmap(bmap,null,new Rect(0,0,devWidth,devHeight), paint);
 
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
@@ -90,9 +90,9 @@ class WhirlView extends SurfaceView implements Runnable {
             for (int y=0; y<height; y++) {
 
                 field[x][y][nstep] = field[x][y][step];
-
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
+                boolean loop = true;
+                for (int dx=-1; dx<=1 && loop; dx++) {
+                    for (int dy=-1; dy<=1 && loop; dy++) {
                         int x2 = x + dx;
                         int y2 = y + dy;
                         if (x2<0) x2 += width;
@@ -101,6 +101,7 @@ class WhirlView extends SurfaceView implements Runnable {
                         if (y2>=height) y2 -= height;
                         if ( (field[x][y][step]+1) % MAX_COLOR == field[x2][y2][step]) {
                             field[x][y][nstep] = field[x2][y2][step];
+                            loop = false;
                         }
                     }
                 }
