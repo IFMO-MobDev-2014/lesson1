@@ -1,7 +1,6 @@
 package ru.ifmo.md.lesson1;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.Log;
@@ -10,6 +9,7 @@ import android.view.SurfaceView;
 
 import java.util.Random;
 
+// Loskutov Ignat (2538)
 /**
 * Created by thevery on 11/09/14.
 */
@@ -21,7 +21,7 @@ class WhirlView extends SurfaceView implements Runnable {
     int height = 0;
     final int scale = 4;
     final int MAX_COLOR = 10;
-    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
     Thread thread = null;
     Paint paint = new Paint();
