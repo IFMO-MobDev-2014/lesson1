@@ -12,6 +12,7 @@ import java.util.Random;
 /**
  * Created by thevery on 11/09/14.
  */
+
 class WhirlView extends SurfaceView implements Runnable {
 
     final int width = 240;                          //only need to render 240x320 so made them constant
