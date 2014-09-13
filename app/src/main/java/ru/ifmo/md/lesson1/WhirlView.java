@@ -67,17 +67,17 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        xScale = (float)w/width;
-        yScale = (float)h/height;
+        xScale = (float)w / width;
+        yScale = (float)h / height;
         initField();
     }
 
     void initField() {
 
-        colours = new int[width*height];
+        colours = new int[width * height];
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
                 field2[x][y] = field[x][y];
                 field3[x][y] = field[x][y];
@@ -86,20 +86,20 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                int colour = (field[x][y]+1) % MAX_COLOR;       //calculating colour needed for match once
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int colour = (field[x][y] + 1) % MAX_COLOR;       //calculating colour needed for match once
                 field2[x][y] = field[x][y];
                 loop:                                           //mark for exiting inner cycles
 
-                for (int dx=-1; dx<=1; dx++) {                  //checking all squares around current
-                    for (int dy=-1; dy<=1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {                  //checking all squares around current
+                    for (int dy =- 1; dy <= 1; dy++) {
                         int x2 = x + dx;
                         int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
+                        if (x2 < 0) x2 += width;
+                        if (y2 < 0) y2 += height;
+                        if (x2 >= width) x2 -= width;
+                        if (y2 >= height) y2 -= height;
                         if (colour  == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
                             break loop;                         //found match - no need for further search
