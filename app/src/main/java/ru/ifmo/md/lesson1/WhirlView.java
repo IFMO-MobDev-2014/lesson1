@@ -18,8 +18,7 @@ class WhirlView extends SurfaceView {
     static final String TAG = "WhirlView";
     public static volatile boolean running = false;
     Bitmap toDraw;
-    FieldDrawer drawerRunnable;
-    Thread updater, drawer;
+    FieldDrawer drawer;
     Timer showTimer;
     FPSLogger perfLog;
     Matrix matrix;
@@ -34,14 +33,9 @@ class WhirlView extends SurfaceView {
         if (getWidth() == 0 || getHeight() == 0)
             return;
         running = true;
-        FieldUpdater updaterRunnable = new FieldUpdater(getWidth() / SCALE, getHeight() / SCALE);
-        drawerRunnable = new FieldDrawer(updaterRunnable, getWidth(), getHeight());
-        updater = new Thread(updaterRunnable);
-        drawer = new Thread(drawerRunnable);
-        updater.start();
-        drawer.start();
+        drawer = new FieldDrawer(getWidth() / SCALE, getHeight() / SCALE);
         showTimer = new Timer();
-        showTimer.schedule(new DisplayTask(), 0, 12);
+        showTimer.schedule(new DisplayTask(), 0, 16);
         perfLog = new FPSLogger();
         showTimer.schedule(perfLog, 0, 1000);
     }
@@ -49,7 +43,6 @@ class WhirlView extends SurfaceView {
     public void pause() {
         running = false;
         try {
-            updater.join();
             drawer.join();
             showTimer.cancel();
         } catch (InterruptedException ignore) {}
@@ -64,9 +57,8 @@ class WhirlView extends SurfaceView {
     @Override
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.concat(matrix);
         if (toDraw != null)
-            canvas.drawBitmap(toDraw, 0, 0, null);
+            canvas.drawBitmap(toDraw, matrix, null);
     }
 
     class DisplayTask extends TimerTask {
@@ -74,7 +66,7 @@ class WhirlView extends SurfaceView {
         public void run() {
             if (getHolder().getSurface().isValid()) {
                 perfLog.tick();
-                toDraw = drawerRunnable.nextBitmap();
+                toDraw = drawer.nextBitmap();
                 Canvas canvas = getHolder().lockCanvas();
                 onDraw(canvas);
                 getHolder().unlockCanvasAndPost(canvas);

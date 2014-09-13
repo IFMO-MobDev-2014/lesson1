@@ -8,16 +8,18 @@ import java.util.concurrent.ArrayBlockingQueue;
 /**
  * Created by dimatomp on 12.09.14.
  */
-public class FieldUpdater implements Runnable {
+public class FieldUpdater extends Thread {
     static final String TAG = "FieldUpdater";
     static final int MAX_FRAMES = 10;
     final ArrayBlockingQueue<int[][]> queue = new ArrayBlockingQueue<>(MAX_FRAMES);
+    public volatile boolean foundConsequence;
     int width, height, field[][];
 
     public FieldUpdater(int width, int height) {
         this.width = width;
         this.height = height;
         initField();
+        start();
     }
 
     public int[][] nextState() {
@@ -31,19 +33,20 @@ public class FieldUpdater implements Runnable {
     void initField() {
         field = new int[width][height];
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                field[x][y] = rand.nextInt(FieldDrawer.MAX_COLOR);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                field[x][y] = rand.nextInt(FieldRenderer.MAX_COLOR);
             }
         }
         try {
             queue.put(field);
-        } catch (InterruptedException ignore) {}
+        } catch (InterruptedException ignore) {
+        }
     }
 
     @Override
     public void run() {
-        while (WhirlView.running) {
+        while (WhirlView.running && !foundConsequence) {
             int[][] field2 = new int[width][height];
             for (int x=0; x<width; x++) {
                 System.arraycopy(field[x], 0, field2[x], 0, field[x].length);
@@ -56,7 +59,7 @@ public class FieldUpdater implements Runnable {
                             if (y2 < 0) y2 += height;
                             if (x2 >= width) x2 -= width;
                             if (y2 >= height) y2 -= height;
-                            if ((field[x][y] + 1) % FieldDrawer.MAX_COLOR == field[x2][y2]) {
+                            if ((field[x][y] + 1) % FieldRenderer.MAX_COLOR == field[x2][y2]) {
                                 field2[x][y] = field[x2][y2];
                             }
                         }
