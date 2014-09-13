@@ -16,6 +16,7 @@ import java.util.TimerTask;
 class WhirlView extends SurfaceView {
     public static final int SCALE = 4;
     static final String TAG = "WhirlView";
+    static final int div = 1;
     public static volatile boolean running = false;
     Bitmap toDraw;
     FieldDrawer drawer;
@@ -37,7 +38,7 @@ class WhirlView extends SurfaceView {
         showTimer = new Timer();
         showTimer.schedule(new DisplayTask(), 0, 16);
         perfLog = new FPSLogger();
-        showTimer.schedule(perfLog, 0, 1000);
+        showTimer.schedule(perfLog, 0, 1000 / div);
     }
 
     public void pause() {
@@ -83,7 +84,7 @@ class WhirlView extends SurfaceView {
 
         @Override
         public synchronized void run() {
-            Log.d(TAG, "FPS: " + frameCount);
+            Log.d(TAG, "FPS: " + frameCount * div);
             frameCount = 0;
         }
     }

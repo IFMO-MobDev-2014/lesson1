@@ -42,7 +42,7 @@ public class ConsequenceFinder extends Thread {
                     } catch (InterruptedException ignore) {
                     }
                 }
-            //Log.v(TAG, "Processing entry " + curIndex);
+            Log.v(TAG, "Processing entry " + curIndex);
             HashSetEntry entry = new HashSetEntry(curIndex);
             if (!hashes.containsKey(entry))
                 hashes.put(entry, curIndex);
@@ -53,7 +53,9 @@ public class ConsequenceFinder extends Thread {
                 FieldRenderer renderer = new FieldRenderer(history[i].length, history[i][0].length);
                 for (int j = i; j < curIndex - 1; j++)
                     animation[j - i] = renderer.draw(history[j]);
-                callbackInstance.replaceWithAnimation(animation, historyIndex - curIndex);
+                synchronized (this) {
+                    callbackInstance.replaceWithAnimation(animation, historyIndex - curIndex);
+                }
                 break;
             }
             curIndex++;
