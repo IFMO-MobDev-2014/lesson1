@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -16,12 +17,14 @@ import java.util.Random;
 class WhirlView extends SurfaceView implements Runnable {
     int[][] field = null;
     int[][] field2;
+    int[] color;
 
-    Paint paint = new Paint();
-    Random rand = new Random();;
+    Random rand = new Random();
     Canvas canvas;
     Bitmap bufferBitmap;
-    Canvas bufferCanvas;
+
+    Rect displ;
+    Rect bm;
 
     int width = 0;
     int height = 0;
@@ -81,14 +84,17 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         width = w / scale;
         height = h / scale;
+
+        bm = new Rect(0, 0, width, height);
+        displ = new Rect(0, 0, w, h);
+
         initField();
     }
 
     void initField() {
         field = new int[width][height];
         field2 = new int[width][height];
-        bufferBitmap = Bitmap.createBitmap(width * scale, height* scale, Bitmap.Config.RGB_565);
-        bufferCanvas = new Canvas(bufferBitmap);
+        color = new int[width * height];
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -127,13 +133,12 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                paint.setColor(palette[field[x][y]]);
-                bufferCanvas.drawRect(x * scale, y * scale, (x + 1) * scale, (y + 1) * scale, paint);
-            }
-        }
-        canvas.drawBitmap(bufferBitmap, 0, 0, null);
+        for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+                color[x + width * y] = palette[field[x][y]];
+
+        bufferBitmap = Bitmap.createBitmap(color, width, height, Bitmap.Config.RGB_565);
+        canvas.drawBitmap(bufferBitmap, bm, displ, null);
     }
 }
 
