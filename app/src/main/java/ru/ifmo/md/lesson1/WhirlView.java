@@ -17,22 +17,21 @@ class WhirlView extends SurfaceView implements Runnable {
     private static final Object lock = new Object();
     float scaleX = 0;
     float scaleY = 0;
+    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+// /*some hypnotic*/    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF, 0xFF86E500, 0xFF40E100, 0xFF00DD03, 0xFF00D944, 0xFF00D583, 0xFF00D2BF, 0xFF00A2CE, 0xFF0062CA, 0xFF0024C6, 0xFF1600C2, 0xFF4E00BF};
+    final int MAX_COLOR = palette.length;
+    int [][] field3 = new int[height][width];
     boolean ready = false;
     int [] bitmapArrayForDrawing = new int [width * height];
- //   int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
-//    final int MAX_COLOR = 21;
     SurfaceHolder holder;
     Thread thread = null;
     Thread drawThread = null;
     volatile boolean running = false;
 
     private class TCount implements Runnable{
-        int [] bitmapArray = new int[width * height];
         int [][] field = new int[height][width];
         int [][] field2 = new int[height][width];
         volatile boolean r = false;
-        int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF, 0xFF86E500, 0xFF40E100, 0xFF00DD03, 0xFF00D944, 0xFF00D583, 0xFF00D2BF, 0xFF00A2CE, 0xFF0062CA, 0xFF0024C6, 0xFF1600C2, 0xFF4E00BF};
-        final int MAX_COLOR = palette.length;
         @Override
         public void run() {
             initField();
@@ -65,7 +64,6 @@ class WhirlView extends SurfaceView implements Runnable {
                         if (y2 >= height) y2 -= height;
                         if ( (field[y][x] + 1) % MAX_COLOR == field[y2][x2]) {
                             field2[y][x] = field[y2][x2];
-                            bitmapArray[y * width + x] = palette[field2[y][x]];
                         }
                     }
                 }
@@ -85,7 +83,6 @@ class WhirlView extends SurfaceView implements Runnable {
                         if (y2 >= height) y2 -= height;
                         if ( (field[y][x] + 1) % MAX_COLOR == field[y2][x2]) {
                             field2[y][x] = field[y2][x2];
-                            bitmapArray[y * width + x] = palette[field2[y][x]];
                         }
                     }
                 }
@@ -104,7 +101,6 @@ class WhirlView extends SurfaceView implements Runnable {
                         if (y2 >= height) y2 -= height;
                         if ( (field[y][x] + 1) % MAX_COLOR == field[y2][x2]) {
                             field2[y][x] = field[y2][x2];
-                            bitmapArray[y * width + x] = palette[field2[y][x]];
                         }
                     }
                 }
@@ -124,13 +120,12 @@ class WhirlView extends SurfaceView implements Runnable {
                         if (y2 >= height) y2 -= height;
                         if ( (field[y][x] + 1) % MAX_COLOR == field[y2][x2]) {
                             field2[y][x] = field[y2][x2];
-                            bitmapArray[y * width + x] = palette[field2[y][x]];
                         }
                     }
                 }
             }
-            long finishTime = System.nanoTime();
-            Log.i("CYCLE1", "Circle: " + (finishTime - startTime) / 1000000);
+//            long finishTime = System.nanoTime();
+//            Log.i("CYCLE1", "Circle: " + (finishTime - startTime) / 1000000);
             startTime = System.nanoTime();
             for (int y = 1; y < height - 1; y++) {
                 for (int x = 1; x < width - 1; x++) {
@@ -156,29 +151,26 @@ class WhirlView extends SurfaceView implements Runnable {
                         field2[y][x] = field[y][x + 1];
                     else if (nextColor == field[y + 1][x + 1])
                         field2[y][x] = field[y + 1][x + 1];
-                    bitmapArray[y * width + x] = palette[field2[y][x]];
                 }
             }
-            finishTime = System.nanoTime();
-            Log.i("CYCLE2", "Circle: " + (finishTime - startTime) / 1000000);
-            int[][] tmp = field;
-            field = field2;
-            field2 = tmp;
-            int[] arr;
+            int [][] tmp;
             synchronized (lock) {
-//                while (ready) {
-//                    try {
-//                        lock.wait();
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-                arr = bitmapArrayForDrawing;
-                bitmapArrayForDrawing = bitmapArray;
-                bitmapArray = arr;
+                while (ready) {
+                    try {
+                        lock.wait(0, 100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                tmp = field3;
+                field3 = field;
+                field = field2;
+                field2 = tmp;
                 ready = true;
                 lock.notifyAll();
             }
+//            finishTime = System.nanoTime();
+//            Log.i("CYCLE2", "Circle: " + (finishTime - startTime) / 1000000);
         }
     }
 
@@ -190,18 +182,20 @@ class WhirlView extends SurfaceView implements Runnable {
     public void resume() {
         running = true;
         t.r = true;
+        ready = false;
         thread = new Thread(this);
         drawThread = new Thread(t);
         drawThread.setPriority(Thread.MAX_PRIORITY);
-        thread.start();
         drawThread.start();
+        thread.start();
     }
 
     public void pause() {
-        running = false;
-        t.r = false;
         try {
+          //  synchronized ()
+            t.r = false;
             drawThread.join();
+            running = false;
             thread.join();
         } catch (InterruptedException ignore) {}
     }
@@ -226,7 +220,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
 //                try {
-//                    Thread.sleep(115);
+//                    Thread.sleep(4);
 //                } catch (InterruptedException ignore) {}
             }
         }
@@ -238,33 +232,17 @@ class WhirlView extends SurfaceView implements Runnable {
             scaleY = (float)h/height;
     }
 
-    void initField() {
-        t.r = false;
-        ready = false;
-        try {
-            drawThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        t.r = true;
-        drawThread = new Thread(t);
-        drawThread.setPriority(Thread.MAX_PRIORITY);
-        drawThread.start();
-    }
-
     @Override
     public void onDraw(Canvas canvas) {
-        long startTime = System.nanoTime();
-//        for (int y = 0; y < height; y++) {
-//            for (int x = 0; x < width; x++) {
-//                bitmapArray[y * width + x] = palette[field[y][x]];
-//               // tmpPaint.setColor(palette[field[x][y]]);
-//               // canvas.drawRect(x*scaleX, y*scaleY, (x + 1)*scaleX, (y + 1)*scaleY, tmpPaint);
-//            }
-//        }
+//        long startTime = System.nanoTime();
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                bitmapArrayForDrawing[y * width + x] = palette[field3[y][x]];
+            }
+        }
             canvas.scale(scaleX, scaleY);
             canvas.drawBitmap(bitmapArrayForDrawing, 0, width, 0, 0, width, height, false, null);
-        long finishTime = System.nanoTime();
-        Log.i("onDrawCycle", "" + (finishTime - startTime) / 1000000);
+//        long finishTime = System.nanoTime();
+//        Log.i("onDrawCycle", "" + (finishTime - startTime) / 1000000);
     }
 }
