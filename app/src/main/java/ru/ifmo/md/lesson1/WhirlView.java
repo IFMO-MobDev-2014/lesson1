@@ -69,7 +69,7 @@ class WhirlView extends SurfaceView implements Runnable {
         int superCounter = 0;
         float averageFPS = 0.0f;
         while (running) {
-            while (repetitionMode) {
+            while (running && repetitionMode) {
                 if (holder.getSurface().isValid()) {
                     long startTime = System.nanoTime();
                     Canvas canvas = holder.lockCanvas();
