@@ -23,7 +23,7 @@ class WhirlView extends SurfaceView implements Runnable {
     int[][] updatedCell = new int[width][height];
     int[] colors = new int[width*height];
     Rect rect = null;
-    Bitmap place = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_4444);
+    Bitmap place = null;
 //    int scale = 4;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
@@ -53,8 +53,8 @@ class WhirlView extends SurfaceView implements Runnable {
         while (running) {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
-                Canvas canvas = holder.lockCanvas();
                 updateField();
+                Canvas canvas = holder.lockCanvas();
                 reDraw(canvas);
 //                onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
@@ -79,22 +79,23 @@ class WhirlView extends SurfaceView implements Runnable {
     void initField() {
 //        field = new int[width][height];
         Random rand = new Random();
+        int colorsCell = 0;
         for (int x=0; x<width; x++) {
             for (int y = 0; y<height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
-                colors[x*height + y] = palette[field[x][y]];
+                colors[colorsCell++] = palette[field[x][y]];
 //                place.setPixel(x, y, palette[field[x*width + y]]);
             }
         }
-        place.setPixels(colors, 0, width, 0, 0, width, height);
+        place = Bitmap.createBitmap(colors, width, height, Bitmap.Config.ARGB_4444);
+//        place.setPixels(colors, 0, width, 0, 0, width, height);
     }
 
     void updateField() {
 //        field2 = new int[width][height];
 //        boolean updateCell = false;
-        int rowShift;
+        int colorsCell = 0;
         for (int x=0; x<width; x++) {
-            rowShift = x * height;
             for (int y=0; y<height; y++) {
 
 //                field2[x][y] = field[x][y];
@@ -128,7 +129,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 }
 
 //                colors[x*height+y] = palette[field2[x][y]];
-                colors[rowShift+y] = palette[field[x][y]];
+                colors[colorsCell++] = palette[field[x][y]];
             }
         }
 //        field = field2;
