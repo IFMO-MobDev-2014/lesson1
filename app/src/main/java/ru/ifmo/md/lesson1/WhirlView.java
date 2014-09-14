@@ -1,5 +1,6 @@
 package ru.ifmo.md.lesson1;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -26,12 +27,12 @@ class WhirlView extends SurfaceView implements Runnable {
     private int[][] tmpField = new int[width][height];
     private int[] pixels = new int[width * height];
 
-    private static final int MAX_COLORS = 20;
+    private static final int MAX_COLORS = 15;
     private int[] palette = null;
 
     private Paint paint = null;
     private long lastFpsUpdate;
-    private long FPS_UPDATE_INTERVAL = 1000;
+    private final static long FPS_UPDATE_INTERVAL = 1000 * 1000 * 1000;
     private float fps;
     private int framesDrawn = 0;
 
@@ -59,6 +60,7 @@ class WhirlView extends SurfaceView implements Runnable {
         } catch (InterruptedException ignore) {}
     }
 
+    @SuppressLint("WrongCall")
     public void run() {
         while (running) {
             updateField();
@@ -80,7 +82,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void initPalette() {
         palette = new int[MAX_COLORS];
-        float f1 = 1.4f, f2 = 1.4f, f3 = 1.4f;
+        float f1 = 0.4f, f2 = 0.3f, f3 = 0.3f;
         int p1 = 0, p2 = 2, p3 = 4;
         int w = 128, center = 127;
         for (int i = 0; i < MAX_COLORS; i++) {
@@ -96,7 +98,7 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void initField() {
-        Random rand = new Random(742689);
+        Random rand = new Random(3124325);
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLORS);
@@ -108,9 +110,9 @@ class WhirlView extends SurfaceView implements Runnable {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 tmpField[x][y] = field[x][y];
-                boolean changed = false;
-                for (int dx = -1; !changed && dx <= 1; dx++) {
-                    for (int dy = -1; !changed && dy <= 1; dy++) {
+                changed:
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
                         int x2 = x + dx;
                         int y2 = y + dy;
                         if (x2 < 0) x2 += width;
@@ -121,7 +123,7 @@ class WhirlView extends SurfaceView implements Runnable {
                         if (color == MAX_COLORS) color = 0;
                         if (color == field[x2][y2]) {
                             tmpField[x][y] = field[x2][y2];
-                            changed = true;
+                            break changed;
                         }
                     }
                 }
@@ -130,19 +132,21 @@ class WhirlView extends SurfaceView implements Runnable {
         int[][] tmp = field;
         field = tmpField;
         tmpField = tmp;
+        int cnt = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                pixels[x * width + y] = palette[field[x][y]];
+                pixels[cnt++] = palette[field[x][y]];
             }
         }
     }
 
     void recalcFps() {
         framesDrawn++;
-        long now = System.currentTimeMillis();
+        long now = System.nanoTime();
         long elapsed = now - lastFpsUpdate;
         if (elapsed > FPS_UPDATE_INTERVAL) {
             fps = (float)framesDrawn * FPS_UPDATE_INTERVAL / elapsed;
+            Log.d(TAG, String.format("%.3f", fps));
             framesDrawn = 0;
             lastFpsUpdate = now;
         }
