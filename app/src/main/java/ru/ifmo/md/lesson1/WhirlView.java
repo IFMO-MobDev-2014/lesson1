@@ -9,20 +9,20 @@ import android.view.SurfaceView;
 
 import java.util.Random;
 
-/**
-* Created by thevery on 11/09/14.
-*/
 class WhirlView extends SurfaceView implements Runnable {
-    
-    int [][] field = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
-    final int MAX_COLOR = 10;
-    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
-    SurfaceHolder holder;
-    Thread thread = null;
-    volatile boolean running = false;
+    private int[][][] field = null;
+    private int[] bmp = null;
+    private int z = 0;
+    private final int width = 240;
+    private final int height = 320;
+    private Paint paint = new Paint();
+    private int scaleX = 4;
+    private int scaleY = 8;
+    private final int MAX_COLOR = 10;
+    private final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    private final SurfaceHolder holder;
+    private Thread thread = null;
+    private volatile boolean running = false;
 
     public WhirlView(Context context) {
         super(context);
@@ -39,76 +39,102 @@ class WhirlView extends SurfaceView implements Runnable {
         running = false;
         try {
             thread.join();
-        } catch (InterruptedException ignore) {}
+        } catch (InterruptedException ignore) {
+        }
     }
 
     public void run() {
+        Canvas canvas;
+        int count = 0;
+        long sum = 0;
         while (running) {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
-                Canvas canvas = holder.lockCanvas();
+                canvas = holder.lockCanvas();
                 updateField();
+
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
-                try {
+                Log.i("TIME", ""+(finishTime - startTime) / 1000000);
+                count++;
+                sum += (finishTime - startTime) / 1000000;
+                /*try {
                     Thread.sleep(16);
-                } catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {
+                }*/
             }
         }
+        Log.i("TIME", "Average circle: " + (sum / count) + "FPS: " + (count * 1000 / sum));
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        scaleX = (w + width - 1) / width;
+        scaleY = (h + height - 1) / height;
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
-        Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                field[x][y] = rand.nextInt(MAX_COLOR);
+        field = new int[2][width][height];
+        bmp = new int[width * scaleX * height * scaleY];
+        z = 0;
+        Random rand;
+        rand = new Random();
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                field[z][x][y] = rand.nextInt(MAX_COLOR);
+                field[1 - z][x][y] = MAX_COLOR;
             }
         }
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        z = 1 - z;
+        int x2, y2;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                field[z][x][y] = field[1 - z][x][y];
 
-                field2[x][y] = field[x][y];
-
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
-                            field2[x][y] = field[x2][y2];
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        x2 = x + dx;
+                        y2 = y + dy;
+                        if (x2 < 0) x2 = width - 1;
+                        if (y2 < 0) y2 = height - 1;
+                        if (x2 >= width) x2 = 0;
+                        if (y2 >= height) y2 = 0;
+                        if ((field[1 - z][x][y] + 1) % MAX_COLOR == field[1 - z][x2][y2]) {
+                            field[z][x][y] = field[1 - z][x2][y2];
                         }
                     }
                 }
             }
         }
-        field = field2;
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+        /*for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                if (field[z][x][y] != field[1 - z][x][y]) {
+                    paint.setColor(palette[field[z][x][y]]);
+                    canvas.drawRect(x * scaleX, y * scaleY, (x + 1) * scaleX, (y + 1) * scaleY, paint);
+                }
+            }
+        }*/
+
+
+        int count = 0;
+        for (int y = 0; y < height; y++) {
+            for (int sy = 0; sy < scaleY; sy++) {
+                for (int x = 0; x < width; x++) {
+                    for (int sx = 0; sx < scaleX; sx++) {
+                        bmp[count++] = palette[field[z][x][y]];
+                    }
+                }
             }
         }
+        canvas.drawBitmap(bmp, 0, width * scaleX, 0, 0, width * scaleX, height * scaleY, false, null);
     }
 }
