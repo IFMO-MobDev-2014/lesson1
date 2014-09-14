@@ -14,7 +14,7 @@ import java.util.TimerTask;
 * Created by thevery on 11/09/14.
 */
 class WhirlView extends SurfaceView {
-    public static final int SCALE = 4;
+    static final int WIDTH = 240, HEIGHT = 320;
     static final String TAG = "WhirlView";
     static final int div = 1;
     public static volatile boolean running = false;
@@ -22,19 +22,17 @@ class WhirlView extends SurfaceView {
     FieldDrawer drawer;
     Timer showTimer;
     FPSLogger perfLog;
-    Matrix matrix;
+    Matrix matrix = new Matrix();
 
     public WhirlView(Context context) {
         super(context);
-        matrix = new Matrix();
-        matrix.setScale(SCALE, SCALE);
     }
 
     public void resume() {
         if (getWidth() == 0 || getHeight() == 0)
             return;
         running = true;
-        drawer = new FieldDrawer(getWidth() / SCALE, getHeight() / SCALE);
+        drawer = new FieldDrawer(WIDTH, HEIGHT);
         showTimer = new Timer();
         showTimer.schedule(new DisplayTask(), 0, 16);
         perfLog = new FPSLogger();
@@ -52,6 +50,7 @@ class WhirlView extends SurfaceView {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        matrix.setScale((float) w / WIDTH, (float) h / HEIGHT);
         resume();
     }
 
