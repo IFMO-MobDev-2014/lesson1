@@ -10,6 +10,8 @@ import android.graphics.Rect;
 import android.graphics.Bitmap;
 
 import java.util.Random;
+import java.util.TreeMap;
+import java.util.ArrayList;
 
 /**
 * Created by thevery on 11/09/14.
@@ -29,6 +31,12 @@ class WhirlView extends SurfaceView implements Runnable {
     Rect dst;
     Bitmap bitmap;
 
+    boolean repetitionMode = false;
+    TreeMap<Integer, Integer> historyChecker;
+    ArrayList<Bitmap> history;
+    int iteration;
+
+
     public WhirlView(Context context) {
         super(context);
         holder = getHolder();
@@ -38,6 +46,10 @@ class WhirlView extends SurfaceView implements Runnable {
             paint.setColor(palette[i]);
             colors[i] = paint;
         }
+
+        historyChecker = new TreeMap<Integer, Integer>();
+        history = new ArrayList<Bitmap>();
+        iteration = 0;
     }
 
     public void resume() {
@@ -57,6 +69,27 @@ class WhirlView extends SurfaceView implements Runnable {
         int superCounter = 0;
         float averageFPS = 0.0f;
         while (running) {
+            while (repetitionMode) {
+                if (holder.getSurface().isValid()) {
+                    long startTime = System.nanoTime();
+                    Canvas canvas = holder.lockCanvas();
+                    //Log.i("info", "" + iteration + " " + history.size());
+                    iteration++;
+                    if (iteration >= history.size()) {
+                        iteration = 0;
+                    }
+                    drawFromHistory(canvas, iteration);
+                    holder.unlockCanvasAndPost(canvas);
+                    long finishTime = System.nanoTime();
+                    superCounter++;
+                    averageFPS += 1000.0 / ((double)(finishTime - startTime) / 1000000);
+                    if (superCounter == 100) {
+                        Log.i("AVG FPS", "" + (averageFPS / 100));
+                        superCounter = 0;
+                        averageFPS = 0.0f;
+                    }
+                }
+            }
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
@@ -71,7 +104,6 @@ class WhirlView extends SurfaceView implements Runnable {
                     superCounter = 0;
                     averageFPS = 0.0f;
                 }
-                // remind me why do we need this?
                 /*try {
                     Thread.sleep(1);
                 } catch (InterruptedException ignore) {}*/
@@ -82,8 +114,13 @@ class WhirlView extends SurfaceView implements Runnable {
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         dst = new Rect(0, 0, w, h);
-        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         pixels = new int[width * height];
+
+        repetitionMode = false;
+        historyChecker.clear();
+        history.clear();
+        iteration = 0;
 
         initField();
     }
@@ -161,7 +198,6 @@ class WhirlView extends SurfaceView implements Runnable {
         }*/
     }
 
-    @Override
     public void draw(Canvas canvas) {
         /*for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
@@ -176,5 +212,30 @@ class WhirlView extends SurfaceView implements Runnable {
         }
         bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
         canvas.drawBitmap(bitmap, null, dst, null);
+        iteration++;
+        if (iteration > 100) { // some empirical constant, may be tuned
+            ArrayList<Integer> pixelList = new ArrayList<Integer>();
+            for (int i=0; i<pixels.length; i++) {
+                pixelList.add(pixels[i]);
+            }
+            int k = pixelList.hashCode();
+            boolean loopFound = false;
+            if (historyChecker.containsKey(k)) {
+                Bitmap potentialBitmap = history.get(historyChecker.get(k));
+                loopFound = bitmap.sameAs(potentialBitmap);
+            } else {
+                historyChecker.put(k, history.size());
+            }
+            Bitmap clonedBitmap = bitmap.createBitmap(pixels, width, height, Bitmap.Config.RGB_565);
+            history.add(clonedBitmap);
+            if (loopFound) {
+                repetitionMode = true;
+                historyChecker.clear();
+            }
+        }
+    }
+
+    public void drawFromHistory(Canvas canvas, int iteration) {
+        canvas.drawBitmap(history.get(iteration), null, dst, null);
     }
 }
