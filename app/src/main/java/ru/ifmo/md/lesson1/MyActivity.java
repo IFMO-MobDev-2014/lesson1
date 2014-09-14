@@ -21,7 +21,7 @@ public class MyActivity extends Activity {
         whirlView.resume();
     }
 
-    @Override
+     @Override
     public void onPause() {
         super.onPause();
         whirlView.pause();
