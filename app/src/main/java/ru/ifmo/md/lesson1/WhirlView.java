@@ -21,9 +21,15 @@ class WhirlView extends SurfaceView implements Runnable {
     int height = 320;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+//    final int MAX_COLOR = 16;
+//    int[] palette = {0xFF000000, 0xFF111111, 0xFF222222, 0xFF333333, 0xFF444444, 0xFF555555, 0xFF666666, 0xFF777777, 0xFF888888, 0xFF999999,
+//            0xFFAAAAAA, 0xFFBBBBBB, 0xFFCCCCCC, 0xFFDDDDDD, 0xFFEEEEEE, 0xFFFFFFFF};
     Rect initRect;
     Rect deviceRect;
     Bitmap b;
+    Bitmap[] bitmaps = new Bitmap[MAX_COLOR];
+    int numOfBitmaps = 0;
+    int curBitmap = 0;
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -51,13 +57,13 @@ class WhirlView extends SurfaceView implements Runnable {
     public void run() {
         while (running) {
             if (holder.getSurface().isValid()) {
-                long startTime = System.nanoTime();
+//                long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
-                long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000 + " " + cycle);
+//                long finishTime = System.nanoTime();
+//                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000 + " " + cycle);
             }
         }
     }
@@ -86,9 +92,13 @@ class WhirlView extends SurfaceView implements Runnable {
         initRect = new Rect(0, 0, width - 1, height - 1);
         deviceRect = new Rect(0, 0, deviceWidth - 1, deviceHeight - 1);
         cycle = false;
+        numOfBitmaps = 0;
+        curBitmap = 0;
     }
 
     void updateField() {
+        if (numOfBitmaps == MAX_COLOR)
+            return;
         if (cycle) {
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
@@ -129,6 +139,11 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
+        if (numOfBitmaps == MAX_COLOR) {
+            canvas.drawBitmap(bitmaps[curBitmap], initRect, deviceRect, null);
+            curBitmap = (curBitmap + 1) % MAX_COLOR;
+            return;
+        }
         int[] colors = new int[width * height];
         int c = 0;
         for (int y = 0; y < height; y++) {
@@ -137,6 +152,9 @@ class WhirlView extends SurfaceView implements Runnable {
             }
         }
         b = Bitmap.createBitmap(colors, width, height, Bitmap.Config.RGB_565);
+        if (cycle) {
+            bitmaps[numOfBitmaps++] = b;
+        }
         canvas.drawBitmap(b, initRect, deviceRect, null);
     }
 }
