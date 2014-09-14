@@ -107,62 +107,50 @@ class WhirlView extends SurfaceView implements Runnable {
                 if (curColor >= MAX_COLOR) {
                     curColor -= MAX_COLOR;
                 }
-                outerLoop:
-                for (int dx=1; dx>=-1; dx--) {
-                    for (int dy=1; dy>=-1; dy--) {
-                        int x2 = x + dx, y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        newColor = field[x2][y2];
-                        if (curColor == newColor) {
-                            field2[x][y] = newColor;
-                            break outerLoop;
-                        }
-                    }
-                }
-                /*newColor = field[x + 1][y + 1];
+                int x1 = x == 0 ? width - 1 : x - 1;
+                int y1 = y == 0 ? height - 1 : y - 1;
+                int x2 = x == width - 1 ? 0 : x + 1;
+                int y2 = y == height - 1 ? 0 : y + 1;
+                newColor = field[x2][y2];
                 if (curColor == newColor) {
                     field2[x][y] = newColor;
                     continue;
                 }
-                newColor = field[x + 1][y];
+                newColor = field[x2][y];
                 if (curColor == newColor) {
                     field2[x][y] = newColor;
                     continue;
                 }
-                newColor = field[x + 1][y - 1];
+                newColor = field[x2][y1];
                 if (curColor == newColor) {
                     field2[x][y] = newColor;
                     continue;
                 }
-                newColor = field[x][y + 1];
+                newColor = field[x][y2];
                 if (curColor == newColor) {
                     field2[x][y] = newColor;
                     continue;
                 }
-                newColor = field[x][y - 1];
+                newColor = field[x][y1];
                 if (curColor == newColor) {
                     field2[x][y] = newColor;
                     continue;
                 }
-                newColor = field[x - 1][y + 1];
+                newColor = field[x1][y2];
                 if (curColor == newColor) {
                     field2[x][y] = newColor;
                     continue;
                 }
-                newColor = field[x - 1][y];
+                newColor = field[x1][y];
                 if (curColor == newColor) {
                     field2[x][y] = newColor;
                     continue;
                 }
-                newColor = field[x - 1][y - 1];
+                newColor = field[x1][y1];
                 if (curColor == newColor) {
                     field2[x][y] = newColor;
                     continue;
                 }
-                field2[x][y] = field[x][y];*/
             }
         }
         field3 = field;
