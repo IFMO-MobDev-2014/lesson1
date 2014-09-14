@@ -23,7 +23,8 @@ class WhirlView extends SurfaceView implements Runnable {
     int[][] updatedCell = new int[width][height];
     int[] colors = new int[width*height];
     Rect rect = null;
-    Bitmap place = null;
+//    Bitmap place = null;
+    Bitmap place = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_4444);
 //    int scale = 4;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
@@ -87,8 +88,8 @@ class WhirlView extends SurfaceView implements Runnable {
 //                place.setPixel(x, y, palette[field[x*width + y]]);
             }
         }
-        place = Bitmap.createBitmap(colors, width, height, Bitmap.Config.ARGB_4444);
-//        place.setPixels(colors, 0, width, 0, 0, width, height);
+//        place = Bitmap.createBitmap(colors, width, height, Bitmap.Config.ARGB_4444);
+        place.setPixels(colors, 0, width, 0, 0, width, height);
     }
 
     void updateField() {
