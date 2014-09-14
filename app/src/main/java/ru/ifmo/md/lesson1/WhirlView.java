@@ -2,8 +2,9 @@ package ru.ifmo.md.lesson1;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
+import android.graphics.Rect;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -22,17 +23,19 @@ class WhirlView extends SurfaceView implements Runnable {
 
 
     private final FpsLogger fpsLogger = new FpsLogger(2);
-    private final Random rand = new Random();
-    private final Paint paint = new Paint();
+    private final Bitmap bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.RGB_565);
+
     private final SurfaceHolder holder;
 
-    private float scaleWidth;
-    private float scaleHeight;
     private int[][] field = new int[WIDTH][HEIGHT];
     private int[][] field2 = new int[WIDTH][HEIGHT];
 
     private Thread thread = null;
     private volatile boolean running = false;
+
+    private final Rect bitmapRect = new Rect(0, 0, WIDTH, HEIGHT);
+    private Rect canvasRect;
+
 
     public WhirlView(Context context) {
         super(context);
@@ -66,7 +69,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 fpsLogger.update((finishTime - startTime) / 1000000F);
                 try {
                     Thread.sleep(16);
-                } catch (InterruptedException ignore) {
+                } catch (InterruptedException ignored) {
                 }
             }
         }
@@ -74,12 +77,12 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        scaleWidth = 1F * w / WIDTH;
-        scaleHeight = 1F * h / HEIGHT;
+        canvasRect = new Rect(0, 0, w, h);
         initField();
     }
 
     private void initField() {
+        Random rand = new Random();
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
@@ -117,12 +120,10 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onDraw(Canvas canvas) {
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
-                if (field[x][y] != field2[x][y]) {
-                    paint.setColor(PALETTE[field[x][y]]);
-                    canvas.drawRect(x * scaleWidth, y * scaleHeight,
-                            (x + 1) * scaleWidth, (y + 1) * scaleHeight, paint);
-                }
+                bitmap.setPixel(x, y, PALETTE[field[x][y]]);
             }
         }
+        canvas.drawBitmap(bitmap, bitmapRect,
+                canvasRect, null);
     }
 }
