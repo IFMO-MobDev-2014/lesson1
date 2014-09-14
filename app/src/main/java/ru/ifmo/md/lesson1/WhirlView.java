@@ -157,7 +157,7 @@ class WhirlView extends SurfaceView implements Runnable {
             synchronized (lock) {
                 while (ready) {
                     try {
-                        lock.wait(0, 100);
+                        lock.wait(1);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -208,7 +208,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 synchronized (lock) {
                     while (!ready) {
                         try {
-                            lock.wait();
+                            lock.wait(1);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
