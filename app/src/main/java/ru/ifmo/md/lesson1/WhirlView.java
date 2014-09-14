@@ -13,6 +13,7 @@ import java.util.Random;
 * Created by thevery on 11/09/14.
 */
 class WhirlView extends SurfaceView implements Runnable {
+    
     int [][] field = null;
     int width = 0;
     int height = 0;
