@@ -2,6 +2,8 @@ package ru.ifmo.md.lesson1;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -31,7 +33,12 @@ class WhirlView extends SurfaceView implements Runnable {
 
     private SurfaceHolder holder;
     private Thread thread = null;
+
     private volatile boolean running = false;
+    private volatile boolean updateAll = false;
+    // easy to see that if after some iteration all the cells update its color,
+    // then after the next iteration they also will update its color
+
 
     public WhirlView(Context context) {
         super(context);
@@ -47,13 +54,17 @@ class WhirlView extends SurfaceView implements Runnable {
 
     public void pause() {
         running = false;
+        updateAll = false;
         try {
             thread.join();
         } catch (InterruptedException ignore) {
         }
     }
 
+
+    private static final int MILLIS_TO_UPDATE = 1000;
     private long framesCounter, allTime;
+    private double fps;
 
     public void run() {
         while (running) {
@@ -65,22 +76,36 @@ class WhirlView extends SurfaceView implements Runnable {
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.currentTimeMillis();
                 // Log.i("TIME", "Circle: " + (finishTime - startTime));
-                // Log.i("FPS", "_Circle: " + 1000. / (finishTime - startTime));
+                // Log.i("FPS_", "Circle: " + 1000. / (finishTime - startTime));
                 framesCounter++;
                 allTime += finishTime - startTime;
+                if (allTime > MILLIS_TO_UPDATE) {
+                    fps = framesCounter * 1000. / allTime;
+                    Log.i("FPS", "Circle: " + fps);
+                    framesCounter = 0;
+                    allTime = 0;
+                }
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {
                 }
             }
         }
-        Log.i("FPS", "Summary: " + framesCounter * 1000. / allTime);
+    }
+
+
+    private static final Paint textPaint = new Paint();
+    static {
+        textPaint.setColor(Color.BLACK);
+        textPaint.setFakeBoldText(true);
+        textPaint.setTextSize(40);
     }
 
     public void drawIt(Canvas canvas) {
         canvas.scale(widthScale, heightScale);
         canvas.drawBitmap(colors, 0, width, 0, 0, width, height, false, null);
         // low level method to improve performance
+        canvas.drawText((int) (fps + .5) + "fps", 10, 45, textPaint);
     }
 
     @Override
@@ -97,12 +122,14 @@ class WhirlView extends SurfaceView implements Runnable {
         initField();
     }
 
-    private Random random = new Random(7); // todo: remove seed!
+
+    private Random random = new Random();
 
     private void initField() {
         field = new int[height][width]; // changed dimensions to improve colors caching
         field2 = new int[height][width];
         colors = new int[height * width];
+        updateAll = false;
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 field[y][x] = random.nextInt(MAX_COLOR);
@@ -113,38 +140,51 @@ class WhirlView extends SurfaceView implements Runnable {
     private int[][] field2 = null; // avoid creating unnecessary int[]
 
     private void updateField() {
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-                field2[y][x] = field[y][x];
-
-                outer:
-                for (int dx = -1; dx <= 1; ++dx) {
-                    for (int dy = -1; dy <= 1; ++dy) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2 < 0) {
-                            x2 += width;
-                        }
-                        if (y2 < 0) {
-                            y2 += height;
-                        }
-                        if (x2 >= width) {
-                            x2 -= width;
-                        }
-                        if (y2 >= height) {
-                            y2 -= height;
-                        }
-                        if ((field[y][x] + 1) % MAX_COLOR == field[y2][x2]) {
-                            field2[y][x] = field[y2][x2];
-                            colors[y * width + x] = palette[field2[y][x]];
-                            break outer;
+        if (updateAll) {
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    field[y][x] = (field[y][x] + 1) % MAX_COLOR;
+                    colors[y * width + x] = palette[field[y][x]];
+                }
+            }
+        } else {
+            int tot = 0;
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    field2[y][x] = field[y][x];
+                    outer:
+                    for (int dx = -1; dx <= 1; ++dx) {
+                        for (int dy = -1; dy <= 1; ++dy) {
+                            int x2 = x + dx;
+                            int y2 = y + dy;
+                            if (x2 < 0) {
+                                x2 += width;
+                            }
+                            if (y2 < 0) {
+                                y2 += height;
+                            }
+                            if (x2 >= width) {
+                                x2 -= width;
+                            }
+                            if (y2 >= height) {
+                                y2 -= height;
+                            }
+                            if ((field[y][x] + 1) % MAX_COLOR == field[y2][x2]) {
+                                tot++;
+                                field2[y][x] = field[y2][x2];
+                                colors[y * width + x] = palette[field2[y][x]];
+                                break outer;
+                            }
                         }
                     }
                 }
             }
+            if (tot == height * width) {
+                updateAll = true;
+            }
+            int[][] tmp = field;
+            field = field2;
+            field2 = tmp;
         }
-        int[][] tmp = field;
-        field = field2;
-        field2 = tmp;
     }
 }
