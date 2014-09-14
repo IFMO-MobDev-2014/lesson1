@@ -7,7 +7,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import java.util.Random;
+impoddrt java.util.Random;
 
 class WhirlView extends SurfaceView implements Runnable {
     private int[][][] field = null;
