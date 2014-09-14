@@ -15,10 +15,9 @@ import java.util.Random;
 * Created by thevery on 11/09/14.
 */
 class WhirlView extends SurfaceView implements Runnable {
-    int [][] field = null, field2 = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
+    int [][] field = null, field2 = null, field3 = null;
+    int width = 320;
+    int height = 240;
     final int MAX_COLOR = 10;
     final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     int[] pixels;
@@ -55,24 +54,33 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     public void run() {
+        int superCounter = 0;
+        float averageFPS = 0.0f;
         while (running) {
             if (holder.getSurface().isValid()) {
+                long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
-                long startTime = System.nanoTime();
                 draw(canvas);
-                long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
                 holder.unlockCanvasAndPost(canvas);
+                long finishTime = System.nanoTime();
+                superCounter++;
+                averageFPS += 1000.0 / ((double)(finishTime - startTime) / 1000000);
+                if (superCounter == 100) {
+                    Log.i("AVG FPS", "" + (averageFPS / 100));
+                    superCounter = 0;
+                    averageFPS = 0.0f;
+                }
+                // remind me why do we need this?
+                /*try {
+                    Thread.sleep(1);
+                } catch (InterruptedException ignore) {}*/
             }
         }
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
-
         dst = new Rect(0, 0, w, h);
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         pixels = new int[width * height];
@@ -92,18 +100,29 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        for (int x=1; x<width-1; x++) {
-            for (int y=1; y<height-1; y++) {
+        for (int x=0; x<width; x++) {
+            for (int y=0; y<height; y++) {
                 int curColor = field[x][y] + 1;
                 int newColor;
                 if (curColor >= MAX_COLOR) {
                     curColor -= MAX_COLOR;
                 }
-                /*if (x2<0) x2 += width;
-                if (y2<0) y2 += height;
-                if (x2>=width) x2 -= width;
-                if (y2>=height) y2 -= height;*/
-                newColor = field[x + 1][y + 1];
+                outerLoop:
+                for (int dx=1; dx>=-1; dx--) {
+                    for (int dy=1; dy>=-1; dy--) {
+                        int x2 = x + dx, y2 = y + dy;
+                        if (x2<0) x2 += width;
+                        if (y2<0) y2 += height;
+                        if (x2>=width) x2 -= width;
+                        if (y2>=height) y2 -= height;
+                        newColor = field[x2][y2];
+                        if (curColor == newColor) {
+                            field2[x][y] = newColor;
+                            break outerLoop;
+                        }
+                    }
+                }
+                /*newColor = field[x + 1][y + 1];
                 if (curColor == newColor) {
                     field2[x][y] = newColor;
                     continue;
@@ -143,12 +162,15 @@ class WhirlView extends SurfaceView implements Runnable {
                     field2[x][y] = newColor;
                     continue;
                 }
-                field2[x][y] = field[x][y];
+                field2[x][y] = field[x][y];*/
             }
         }
-        for (int x=0; x<width; x++) {
+        field3 = field;
+        field = field2;
+        field2 = field3;
+        /*for (int x=0; x<width; x++) {
             System.arraycopy(field2[x], 0, field[x], 0, height);
-        }
+        }*/
     }
 
     @Override
