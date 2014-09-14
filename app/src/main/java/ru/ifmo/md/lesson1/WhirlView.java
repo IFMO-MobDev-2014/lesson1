@@ -2,10 +2,8 @@ package ru.ifmo.md.lesson1;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.Log;
-import android.util.LruCache;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.graphics.Bitmap;
@@ -20,18 +18,17 @@ import java.util.Random;
 class WhirlView extends SurfaceView implements Runnable {
     int width = 240;
     int height = 320;
-    int[][] field = new int[width][height];
-//    int[][] field2 = null;
-    int[][] updatedCell = new int[width][height];
-    int[] colors = new int[width*height];
-    Rect destRect = null;
-    Rect srcRect = new Rect(0, 0, width, height);
-//    Bitmap place = null;
-//    Bitmap scaledPlace = null;
+    int deviceWidth = 0;
+    int deviceHeight = 0;
+    int[][] field = null;
+    int[][] updatedCell = null;
+    int[] colors = null;
     Bitmap place = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-//    ArrayList<int[][]> fields;
-    Paint paint = new Paint();
-//    int scale = 4;
+    ArrayList<int[]> pixels = new ArrayList<int[]>();
+    ArrayList<Bitmap> places = new ArrayList<Bitmap>();
+    int countCycle = 0;
+    int sizeCycle = 0;
+    Rect destRect = null;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
@@ -60,10 +57,8 @@ class WhirlView extends SurfaceView implements Runnable {
         while (running) {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
-                updateField();
                 Canvas canvas = holder.lockCanvas();
                 onDraw(canvas);
-//                onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
 //                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
@@ -77,28 +72,57 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-//        width = w/scale;
-//        height = h/scale;
+        deviceWidth = w;
+        deviceHeight = h;
         destRect = new Rect(0, 0, w, h);
         initField();
     }
 
+    boolean isMatrixEqual(int[] m1, int[] m2) {
+        for (int x = 0; x < width*height; x++) {
+            if (m1[x] != m2[x]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    boolean isExistCycle(int[] m) {
+        for (int i = 0; i < pixels.size(); i++) {
+            if (isMatrixEqual(m, pixels.get(i))) {
+                sizeCycle = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
     void initField() {
-//        field = new int[width][height];
+        field = new int[width][height];
+        updatedCell = new int[width][height];
+        colors = new int[width*height];
         Random rand = new Random();
         int colorsCell = 0;
         for (int x=0; x<width; x++) {
             for (int y = 0; y<height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
                 colors[colorsCell++] = palette[field[x][y]];
-//                place.setPixel(x, y, palette[field[x*width + y]]);
             }
         }
-//        place = Bitmap.createBitmap(colors, width, height, Bitmap.Config.ARGB_4444);
-        place.setPixels(colors, 0, width, 0, 0, width, height);
-//        paint.setAntiAlias(true);
-//        paint.setFilterBitmap(true);
-//        paint.setDither(true);
+
+        pixels.add(colors);
+        updateField();
+        while (!isExistCycle(colors)) {
+            pixels.add(colors);
+            updateField();
+        }
+
+        Log.i("SIZE", String.valueOf(pixels.size()));
+
+        field = null;
+        colors = null;
+        updatedCell = null;
+
     }
 
     private void updateCell(int x, int y) {
@@ -119,10 +143,7 @@ class WhirlView extends SurfaceView implements Runnable {
                         colorField = MAX_COLOR - 1;
                     }
                 }
-//                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
                 if ((field[x][y]+1) % MAX_COLOR == colorField) {
-//                            field2[x][y] = field[x2][y2];
-//                            updateCell = true;
                     field[x][y] = colorField;
                     updatedCell[x][y] = 1;
                     return;
@@ -133,44 +154,31 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     private void updateField() {
-//        field2 = new int[width][height];
-//        boolean updateCell = false;
         int colorsCell = 0;
+        colors = new int[width*height];
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-
-//                field2[x][y] = field[x][y];
-
                 updateCell(x, y);
-//                updateCell = false;
 
-
-//                colors[x*height+y] = palette[field2[x][y]];
                 colors[colorsCell++] = palette[field[x][y]];
             }
         }
-//        field = field2;
-    }
-
-    public void reDraw(Canvas canvas)
-    {
-/*        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-//                field2[x][y] = palette[field[x][y]];
-//                place.setPixel(x, y, palette[field[x][y]]);
-            }
-        }*/
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-//        place.prepareToDraw();
-        place.setPixels(colors, 0, width, 0, 0, width, height);
-//        place.prepareToDraw();
-//        scaledPlace = Bitmap.createScaledBitmap(place, destRect.width(), destRect.height(), true);
-        canvas.drawBitmap(place, null, destRect, null);
-//        canvas.drawBitmap(scaledPlace, 0, 0, null);
-//        canvas.setBitmap(place);
+        if (!pixels.isEmpty()) {
+            place.setPixels(pixels.get(countCycle), 0, width, 0, 0, width, height);
+            canvas.drawBitmap(place, null, destRect, null);
+            if (countCycle < sizeCycle) {
+                sizeCycle--;
+            } else {
+                places.add(Bitmap.createScaledBitmap(place, deviceWidth, deviceHeight, true));
+            }
+            pixels.remove(0);
+        } else {
+            canvas.drawBitmap(places.get(countCycle), 0, 0, null);
+            countCycle = (countCycle + 1) % places.size();
+        }
     }
 }
