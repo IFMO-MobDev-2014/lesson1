@@ -16,7 +16,7 @@ public class ConsequenceFinder extends Thread {
     private static final String TAG = "ConsequenceFinder";
     final FieldDrawer callbackInstance;
     HashMap<HashSetEntry, Integer> hashes = new HashMap<>();
-    volatile int historyIndex;
+    int historyIndex;
 
     public ConsequenceFinder(FieldDrawer callbackInstance) {
         this.callbackInstance = callbackInstance;
@@ -24,7 +24,7 @@ public class ConsequenceFinder extends Thread {
     }
 
     public synchronized void addToHistory(int[][] field) {
-        if (historyIndex < MAX_CAPACITY) {
+        if (historyIndex < MAX_CAPACITY && history != null) {
             history[historyIndex] = field;
             notify();
         }
@@ -49,10 +49,13 @@ public class ConsequenceFinder extends Thread {
             else {
                 Log.d(TAG, "I have definitely seen this before... Maybe speed them up a little?");
                 int i = hashes.get(entry);
+                int history2[][][] = new int[curIndex - 1 - i][][];
+                System.arraycopy(history, i, history2, 0, curIndex - 1 - i);
+                history = null; // removing garbage
                 Bitmap animation[] = new Bitmap[curIndex - 1 - i];
-                FieldRenderer renderer = new FieldRenderer(history[i].length, history[i][0].length);
-                for (int j = i; j < curIndex - 1; j++)
-                    animation[j - i] = renderer.draw(history[j]);
+                FieldRenderer renderer = new FieldRenderer(history2[0].length, history2[0][0].length);
+                for (int j = 0; j < history2.length; j++)
+                    animation[j] = renderer.draw(history2[j]);
                 synchronized (this) {
                     callbackInstance.replaceWithAnimation(animation, historyIndex - curIndex);
                 }
@@ -60,6 +63,7 @@ public class ConsequenceFinder extends Thread {
             }
             curIndex++;
         }
+        Log.d(TAG, "Stopped looking for loops.");
         hashes = null;
         history = null;
     }
