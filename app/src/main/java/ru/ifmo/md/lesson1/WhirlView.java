@@ -14,16 +14,23 @@ import java.util.Random;
  * Created by thevery on 11/09/14.
  */
 class WhirlView extends SurfaceView implements Runnable {
-    private int[][] field = null;
-    private final Paint paint = new Paint();
-    private int width = 0;
-    private int height = 0;
-    private final int scale = 4;
-    private final int MAX_COLOR = 10;
-    private final int[] palette = {
+    private static final int MAX_COLOR = 10;
+    private static final int WIDTH = 240;
+    private static final int HEIGHT = 320;
+    private static final int[] PALETTE = {
             0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080,
             0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+
+
+    private final Random rand = new Random();
+    private final Paint paint = new Paint();
     private final SurfaceHolder holder;
+
+    private float scaleWidth;
+    private float scaleHeight;
+    private int[][] field = new int[WIDTH][HEIGHT];
+    private int[][] field2 = new int[WIDTH][HEIGHT];
+
     private Thread thread = null;
     private volatile boolean running = false;
 
@@ -56,7 +63,8 @@ class WhirlView extends SurfaceView implements Runnable {
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                Log.i("WHIRL", "FPS: "
+                        + String.format("%.2f", (finishTime - startTime) / 1000000.0));
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {
@@ -67,25 +75,22 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w / scale;
-        height = h / scale;
+        scaleWidth = 1F * w / WIDTH;
+        scaleHeight = 1F * h / HEIGHT;
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
-        Random rand = new Random();
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
             }
         }
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
 
                 field2[x][y] = field[x][y];
 
@@ -93,10 +98,10 @@ class WhirlView extends SurfaceView implements Runnable {
                     for (int dy = -1; dy <= 1; dy++) {
                         int x2 = x + dx;
                         int y2 = y + dy;
-                        if (x2 < 0) x2 += width;
-                        if (y2 < 0) y2 += height;
-                        if (x2 >= width) x2 -= width;
-                        if (y2 >= height) y2 -= height;
+                        if (x2 < 0) x2 += WIDTH;
+                        if (y2 < 0) y2 += HEIGHT;
+                        if (x2 >= WIDTH) x2 -= WIDTH;
+                        if (y2 >= HEIGHT) y2 -= HEIGHT;
                         if ((field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
                         }
@@ -104,15 +109,21 @@ class WhirlView extends SurfaceView implements Runnable {
                 }
             }
         }
+
+        int[][] buf = field;
         field = field2;
+        field2 = buf;
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x * scale, y * scale, (x + 1) * scale, (y + 1) * scale, paint);
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
+                if (field[x][y] != field2[x][y]) {
+                    paint.setColor(PALETTE[field[x][y]]);
+                    canvas.drawRect(x * scaleWidth, y * scaleHeight,
+                            (x + 1) * scaleWidth, (y + 1) * scaleHeight, paint);
+                }
             }
         }
     }
