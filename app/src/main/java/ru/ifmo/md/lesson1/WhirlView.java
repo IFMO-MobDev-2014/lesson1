@@ -6,6 +6,8 @@ import android.graphics.Paint;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.graphics.Rect;
+import android.graphics.Bitmap;
 
 import java.util.Random;
 
@@ -19,10 +21,14 @@ class WhirlView extends SurfaceView implements Runnable {
     int scale = 4;
     final int MAX_COLOR = 10;
     final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    int[] pixels;
     final Paint[] colors = new Paint[palette.length];
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
+
+    Rect dst;
+    Bitmap bitmap;
 
     public WhirlView(Context context) {
         super(context);
@@ -51,13 +57,13 @@ class WhirlView extends SurfaceView implements Runnable {
     public void run() {
         while (running) {
             if (holder.getSurface().isValid()) {
-                long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
-                onDraw(canvas);
-                holder.unlockCanvasAndPost(canvas);
+                long startTime = System.nanoTime();
+                draw(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                holder.unlockCanvasAndPost(canvas);
             }
         }
     }
@@ -66,6 +72,11 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         width = w/scale;
         height = h/scale;
+
+        dst = new Rect(0, 0, w, h);
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        pixels = new int[width * height];
+
         initField();
     }
 
@@ -136,18 +147,24 @@ class WhirlView extends SurfaceView implements Runnable {
             }
         }
         for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                field[x][y] = field2[x][y];
-            }
+            System.arraycopy(field2[x], 0, field[x], 0, height);
         }
     }
 
     @Override
-    public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
+    public void draw(Canvas canvas) {
+        /*for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
                 canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, colors[field[x][y]]);
             }
+        }*/
+        int curPixel = 0;
+        for (int y=0; y<height; y++) {
+            for (int x=0; x<width; x++) {
+                pixels[curPixel++] = palette[field[x][y]];
+            }
         }
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
+        canvas.drawBitmap(bitmap, null, dst, null);
     }
 }
