@@ -57,17 +57,11 @@ class WhirlView extends SurfaceView implements Runnable {
     public void run() {
         while (running) {
             if (holder.getSurface().isValid()) {
-                long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
-                long finishTime = System.nanoTime();
-                fpsLogger.update((finishTime - startTime) / 1000000F);
-                try {
-                    Thread.sleep(16);
-                } catch (InterruptedException ignored) {
-                }
+                fpsLogger.update();
             }
         }
     }
@@ -111,6 +105,6 @@ class WhirlView extends SurfaceView implements Runnable {
     @Override
     public void onDraw(Canvas canvas) {
         canvas.scale(scaleX, scaleY);
-        canvas.drawBitmap(colors, 0, WIDTH, 0F, 0F, WIDTH, HEIGHT, false, null);
+        canvas.drawBitmap(colors, 0, WIDTH, 0, 0, WIDTH, HEIGHT, false, null);
     }
 }
