@@ -7,7 +7,7 @@ import android.util.Log;
  *
  * @author Zakhar Voit (zakharvoit@gmail.com)
  */
-public class FpsLogger {
+class FpsLogger {
     private float value;
     private int count;
 

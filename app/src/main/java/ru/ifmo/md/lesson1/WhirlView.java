@@ -2,9 +2,7 @@ package ru.ifmo.md.lesson1;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -14,28 +12,27 @@ import java.util.Random;
  * Created by thevery on 11/09/14.
  */
 class WhirlView extends SurfaceView implements Runnable {
-    private static final int MAX_COLOR = 10;
     private static final int WIDTH = 240;
     private static final int HEIGHT = 320;
+    private static final int SIZE = WIDTH * HEIGHT;
     private static final int[] PALETTE = {
             0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080,
             0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    private static final int MAX_COLOR = PALETTE.length;
 
 
     private final FpsLogger fpsLogger = new FpsLogger(2);
-    private final Bitmap bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.RGB_565);
-
     private final SurfaceHolder holder;
 
-    private int[][] field = new int[WIDTH][HEIGHT];
-    private int[][] field2 = new int[WIDTH][HEIGHT];
+    private int[] field = new int[SIZE];
+    private int[] field2 = new int[SIZE];
+    private final int[] colors = new int[SIZE];
+
+    private float scaleX;
+    private float scaleY;
 
     private Thread thread = null;
     private volatile boolean running = false;
-
-    private final Rect bitmapRect = new Rect(0, 0, WIDTH, HEIGHT);
-    private Rect canvasRect;
-
 
     public WhirlView(Context context) {
         super(context);
@@ -77,53 +74,43 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        canvasRect = new Rect(0, 0, w, h);
+        scaleX = 1F * w / WIDTH;
+        scaleY = 1F * h / HEIGHT;
         initField();
     }
 
     private void initField() {
         Random rand = new Random();
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
-                field[x][y] = rand.nextInt(MAX_COLOR);
-            }
+        for (int i = 0; i < SIZE; i++) {
+            field[i] = rand.nextInt(MAX_COLOR);
         }
     }
 
     private void updateField() {
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
-
-                field2[x][y] = field[x][y];
-
-                all:
+        for (int i = 0; i < SIZE; i++) {
+            field2[i] = field[i];
+            int next = (field[i] + 1) % MAX_COLOR;
+            all:
+            for (int dy = -WIDTH; dy <= WIDTH; dy += WIDTH) {
                 for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        int x2 = (x + dx + WIDTH) % WIDTH;
-                        int y2 = (y + dy + HEIGHT) % HEIGHT;
-
-                        if ((field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
-                            field2[x][y] = field[x2][y2];
-                            break all;
-                        }
+                    int j = (i + dy + dx + SIZE) % SIZE;
+                    if (field[j] == next) {
+                        field2[i] = next;
+                        colors[i] = PALETTE[next];
+                        break all;
                     }
                 }
             }
         }
 
-        int[][] buf = field;
+        int[] buf = field;
         field = field2;
         field2 = buf;
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
-                bitmap.setPixel(x, y, PALETTE[field[x][y]]);
-            }
-        }
-        canvas.drawBitmap(bitmap, bitmapRect,
-                canvasRect, null);
+        canvas.scale(scaleX, scaleY);
+        canvas.drawBitmap(colors, 0, WIDTH, 0F, 0F, WIDTH, HEIGHT, false, null);
     }
 }
