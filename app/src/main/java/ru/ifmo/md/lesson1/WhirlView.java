@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -22,6 +21,7 @@ class WhirlView extends SurfaceView implements Runnable {
             0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
 
 
+    private final FpsLogger fpsLogger = new FpsLogger(2);
     private final Random rand = new Random();
     private final Paint paint = new Paint();
     private final SurfaceHolder holder;
@@ -63,8 +63,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("WHIRL", "FPS: "
-                        + String.format("%.2f", (finishTime - startTime) / 1000000.0));
+                fpsLogger.update((finishTime - startTime) / 1000000F);
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {
@@ -80,7 +79,7 @@ class WhirlView extends SurfaceView implements Runnable {
         initField();
     }
 
-    void initField() {
+    private void initField() {
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
@@ -88,22 +87,21 @@ class WhirlView extends SurfaceView implements Runnable {
         }
     }
 
-    void updateField() {
+    private void updateField() {
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
 
                 field2[x][y] = field[x][y];
 
+                all:
                 for (int dx = -1; dx <= 1; dx++) {
                     for (int dy = -1; dy <= 1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2 < 0) x2 += WIDTH;
-                        if (y2 < 0) y2 += HEIGHT;
-                        if (x2 >= WIDTH) x2 -= WIDTH;
-                        if (y2 >= HEIGHT) y2 -= HEIGHT;
+                        int x2 = (x + dx + WIDTH) % WIDTH;
+                        int y2 = (y + dy + HEIGHT) % HEIGHT;
+
                         if ((field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
+                            break all;
                         }
                     }
                 }
