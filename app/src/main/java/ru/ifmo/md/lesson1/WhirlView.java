@@ -58,7 +58,7 @@ class WhirlView extends SurfaceView implements Runnable {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
-                onDraw(canvas);
+                reDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
 //                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
@@ -165,8 +165,7 @@ class WhirlView extends SurfaceView implements Runnable {
         }
     }
 
-    @Override
-    public void onDraw(Canvas canvas) {
+    public void reDraw(Canvas canvas) {
         if (!pixels.isEmpty()) {
             place.setPixels(pixels.get(countCycle), 0, width, 0, 0, width, height);
             canvas.drawBitmap(place, null, destRect, null);
