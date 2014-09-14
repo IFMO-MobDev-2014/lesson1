@@ -47,7 +47,8 @@ class WhirlView extends SurfaceView implements Runnable {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
-                onDraw(canvas);
+
+                draw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
@@ -76,7 +77,7 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
+        int[][] field2 =field.clone();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
 
@@ -101,10 +102,10 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     @Override
-    public void onDraw(Canvas canvas) {
+    public void draw(Canvas canvas) {
+        Paint paint = new Paint();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
                 paint.setColor(palette[field[x][y]]);
                 canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
             }
