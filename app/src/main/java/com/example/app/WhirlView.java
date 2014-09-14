@@ -16,6 +16,7 @@ import java.util.Random;
 class WhirlView extends SurfaceView implements Runnable {
     int[][] field = null;
     int[] drawingField;
+    Bitmap buffer;
     final int WIDTH ;
     final int HEIGHT;
     RectF screenRect;
@@ -30,6 +31,7 @@ class WhirlView extends SurfaceView implements Runnable {
         super(context);
         WIDTH = 240;
         HEIGHT = 320;
+        buffer = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
         holder = getHolder();
         initField();
         setDrawingCacheQuality(DRAWING_CACHE_QUALITY_HIGH);
@@ -137,6 +139,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
-        canvas.drawBitmap(Bitmap.createBitmap(drawingField, WIDTH, HEIGHT, Bitmap.Config.ARGB_8888), null, screenRect, null);
+        buffer.setPixels(drawingField, 0, WIDTH, 0, 0, WIDTH, HEIGHT);
+        canvas.drawBitmap(buffer, null, screenRect, null);
     }
 }
