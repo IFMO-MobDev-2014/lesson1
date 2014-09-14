@@ -8,7 +8,6 @@ import android.util.Log;
  * @author Zakhar Voit (zakharvoit@gmail.com)
  */
 class FpsLogger {
-    private float value;
     private int count;
 
     public FpsLogger(final int period) {
@@ -23,15 +22,14 @@ class FpsLogger {
 
                     }
 
-                    Log.i("FPS", String.format("%.2f", 1000F / value));
+                    Log.i("FPS", Integer.toString(count));
                     count = 0;
                 }
             }
         }).start();
     }
 
-    public synchronized void update(float value) {
+    public synchronized void update() {
         ++count;
-        this.value = (this.value * (count - 1) + value) / count;
     }
 }
