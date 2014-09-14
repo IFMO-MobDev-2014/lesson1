@@ -15,6 +15,7 @@ import java.util.Random;
 class WhirlView extends SurfaceView implements Runnable {
     Paint paint = new Paint();
     int [][] field = null;
+    int [][] field2 = null;
     int width = 0;
     int height = 0;
     int scale = 4;
@@ -68,6 +69,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void initField() {
         field = new int[width][height];
+        field2 = new int[width][height];
         Random rand = new Random();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
@@ -77,7 +79,6 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
 
@@ -98,7 +99,11 @@ class WhirlView extends SurfaceView implements Runnable {
                 }
             }
         }
-        field = field2;
+        for (int x=0; x<width; x++) {
+            for (int y = 0; y < height; y++) {
+                field[x][y] = field2[x][y];
+            }
+        }
     }
 
     @Override
