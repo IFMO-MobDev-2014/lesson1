@@ -20,7 +20,7 @@ class WhirlView extends SurfaceView {
     private class UpdaterThread extends Thread {
         @Override
         public void run() {
-            while(running) {
+            while (running) {
                 try {
                     barrier.await(); // seems like the most appropriate way to synchronise
                     updateField();
@@ -37,15 +37,21 @@ class WhirlView extends SurfaceView {
                 if (holder.getSurface().isValid()) {
                     try {
                         barrier.await();
-                        long startTime = System.nanoTime();
-                        Log.i("TIME","Since last frame: " + (startTime - lastFrameStart) / 1000000);
-                        lastFrameStart = startTime;
+
+                        framesCounter++; // the only reason why it's here is because drawing is generally faster than updating, so we might as well do it here
+                        long currentTime = System.nanoTime() / 1000000;
+                        if (currentTime - lastSecondStart >= 1000) {
+                            lastSecondStart = currentTime;
+                            Log.i("FPS", framesCounter + "");
+                            framesCounter = 0;
+                        }
+
                         Canvas canvas = holder.lockCanvas();
                         doDraw(canvas);
                         holder.unlockCanvasAndPost(canvas);
                         barrier.await();
+                        swapFields();
                     } catch (InterruptedException ignore) {} catch (BrokenBarrierException ignore) {}
-                    swapFields();
                 }
             }
         }
@@ -55,7 +61,8 @@ class WhirlView extends SurfaceView {
     private int [][] fieldFront = null;
     private int [][] fieldBack = null;
     private int [] pixels = null;
-    private long lastFrameStart = 0;
+    private long lastSecondStart = 0;
+    private int framesCounter = 0;
     private int width = 0;
     private int height = 0;
     private float scaleX = 0.0f;
@@ -99,21 +106,21 @@ class WhirlView extends SurfaceView {
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         boolean wasRunning = running;
-        if(running)
+        if (running)
             pause();
+
         if (w > h) {
             width = SIZE_LONG;
             height = SIZE_SHORT;
-            scaleX = w / (float) width;
-            scaleY = h / (float) height;
         } else {
             width = SIZE_SHORT;
             height = SIZE_LONG;
-            scaleX = w / (float) width;
-            scaleY = h / (float) height;
         }
+        scaleX = w / (float) width;
+        scaleY = h / (float) height;
         initField();
-        if(wasRunning)
+
+        if (wasRunning)
             resume();
     }
 
@@ -121,8 +128,8 @@ class WhirlView extends SurfaceView {
         fieldFront = new int[width][height];
         fieldBack = new int[width][height];
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 fieldFront[x][y] = rand.nextInt(MAX_COLOR);
             }
         }
@@ -136,9 +143,8 @@ class WhirlView extends SurfaceView {
             nc = 0;
         }
 
-        outer:
-        for (int dx=-1; dx<=1; dx++) {
-            for (int dy=-1; dy<=1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
                 int x2 = x + dx;
                 int y2 = y + dy;
                 if (x2<0) x2 += width;
@@ -148,7 +154,7 @@ class WhirlView extends SurfaceView {
 
                 if (nc == fieldFront[x2][y2]) {
                     fieldBack[x][y] = fieldFront[x2][y2];
-                    break outer;
+                    return;
                 }
             }
         }
@@ -168,8 +174,8 @@ class WhirlView extends SurfaceView {
                 }
 
                 outer:
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
                         int x2 = x + dx;
                         int y2 = y + dy;
 
