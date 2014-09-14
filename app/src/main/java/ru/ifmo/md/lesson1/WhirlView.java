@@ -1,8 +1,11 @@
 package ru.ifmo.md.lesson1;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -10,22 +13,39 @@ import android.view.SurfaceView;
 import java.util.Random;
 
 /**
-* Created by thevery on 11/09/14.
-*/
+ * Created by thevery on 11/09/14.
+ * Modified by lightning95.
+ */
+
 class WhirlView extends SurfaceView implements Runnable {
-    int [][] field = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
     final int MAX_COLOR = 10;
-    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    final Bitmap.Config CONFIG = Bitmap.Config.RGB_565;
+    final int WIDTH = 240;
+    final int HEIGHT = 320;
+    final int[] PALETTE = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000,
+            0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+
+    int[][] field;
+    int[][] field2;
+    int[] color;
+
+    Paint paint;
+    Bitmap bitmap;
+    RectF rectF;
+    Canvas canvas;
+    Random rand;
+
     SurfaceHolder holder;
-    Thread thread = null;
-    volatile boolean running = false;
+    Thread thread;
+    volatile boolean running;
 
     public WhirlView(Context context) {
         super(context);
         holder = getHolder();
+        rand = new Random();
+        paint = new Paint();
+        paint.setTextSize(100);
+        paint.setColor(Color.WHITE);
     }
 
     public void resume() {
@@ -38,76 +58,83 @@ class WhirlView extends SurfaceView implements Runnable {
         running = false;
         try {
             thread.join();
-        } catch (InterruptedException ignore) {}
+        } catch (InterruptedException ignore) {
+        }
     }
 
     public void run() {
+        long startTime, finishTime, fps = 0;
         while (running) {
             if (holder.getSurface().isValid()) {
-                long startTime = System.nanoTime();
-                Canvas canvas = holder.lockCanvas();
+                startTime = System.nanoTime();
+                canvas = holder.lockCanvas();
                 updateField();
-                onDraw(canvas);
+                drawField(canvas);
+                canvas.drawText("FPS : " + fps, 100, 100, paint);
                 holder.unlockCanvasAndPost(canvas);
-                long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                finishTime = System.nanoTime();
+                fps = 1000000000 / (finishTime - startTime);
+                Log.i("TIME", "FPS: " + fps);
                 try {
                     Thread.sleep(16);
-                } catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {
+                }
             }
         }
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        rectF = new RectF(0, 0, w, h);
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
-        Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        field = new int[WIDTH][HEIGHT];
+        field2 = new int[WIDTH][HEIGHT];
+        color = new int[WIDTH * HEIGHT];
+        bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, CONFIG);
+
+        for (int x = 0; x < WIDTH; ++x) {
+            for (int y = 0; y < HEIGHT; ++y) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
             }
         }
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-
-                field2[x][y] = field[x][y];
-
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
+        for (int x = 0; x < WIDTH; ++x) {
+            System.arraycopy(field[x], 0, field2[x], 0, HEIGHT);
+            for (int y = 0; y < HEIGHT; ++y) {
+                lazy:
+                for (int dx = 1; dx >= -1; --dx) {
+                    for (int dy = 1; dy >= -1; --dy) {
                         int x2 = x + dx;
                         int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
+                        if (x2 < 0) x2 += WIDTH;
+                        if (y2 < 0) y2 += HEIGHT;
+                        if (x2 >= WIDTH) x2 -= WIDTH;
+                        if (y2 >= HEIGHT) y2 -= HEIGHT;
+                        if ((field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
+                            break lazy;
                         }
                     }
                 }
             }
         }
-        field = field2;
+        for (int x = 0; x < WIDTH; ++x) {
+            System.arraycopy(field2[x], 0, field[x], 0, HEIGHT);
+        }
     }
 
-    @Override
-    public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+    public void drawField(Canvas canvas) {
+        for (int y = 0; y < HEIGHT; ++y) {
+            for (int x = 0; x < WIDTH; ++x) {
+                color[y * WIDTH + x] = PALETTE[field[x][y]];
             }
         }
+        bitmap.setPixels(color, 0, WIDTH, 0, 0, WIDTH, HEIGHT);
+        canvas.drawBitmap(bitmap, null, rectF, null);
     }
 }
