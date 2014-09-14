@@ -13,6 +13,7 @@ import java.util.Random;
 * Created by thevery on 11/09/14.
 */
 class WhirlView extends SurfaceView implements Runnable {
+
     Paint paint = new Paint();
     int [][] field = null;
     int [][] field2 = null;
@@ -80,10 +81,10 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void updateField() {
         for (int x=0; x<width; x++) {
+            System.arraycopy(field[x],0,field2[x],0,height);
+        }
+        for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-
-                field2[x][y] = field[x][y];
-
                 for (int dx=-1; dx<=1; dx++) {
                     for (int dy=-1; dy<=1; dy++) {
                         int x2 = x + dx;
@@ -100,9 +101,7 @@ class WhirlView extends SurfaceView implements Runnable {
             }
         }
         for (int x=0; x<width; x++) {
-            for (int y = 0; y < height; y++) {
-                field[x][y] = field2[x][y];
-            }
+            System.arraycopy(field2[x],0,field[x],0,height);
         }
     }
 
