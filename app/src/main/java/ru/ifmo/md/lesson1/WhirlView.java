@@ -1,8 +1,9 @@
 package ru.ifmo.md.lesson1;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -22,9 +23,10 @@ class WhirlView extends SurfaceView implements Runnable {
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
-    Paint paint = new Paint();
     int[][] field2;
-
+    Bitmap bmp;
+    Rect r0 = new Rect(0, 0, width, height);
+    Rect r1;
     public WhirlView(Context context) {
         super(context);
         holder = getHolder();
@@ -45,6 +47,8 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     public void run() {
+        long beginTime = System.nanoTime();
+        int cnt = 0;
         while (running) {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
@@ -53,7 +57,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000 + " FPS: " + 1000000000.0 * (++cnt) / (finishTime - beginTime));
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {
@@ -66,12 +70,14 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         scaleW = (float)w / width;
         scaleH = (float)h / height;
+        r1 = new Rect(0, 0, w, h);
         initField();
     }
 
     void initField() {
         field = new int[width][height];
         field2 = new int[width][height];
+        bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         Random rand = new Random();
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -91,7 +97,6 @@ class WhirlView extends SurfaceView implements Runnable {
                         int y2 = (y + dy + height) % height;
                         if ((field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
-                            break;
                         }
                     }
                 }
@@ -109,9 +114,9 @@ class WhirlView extends SurfaceView implements Runnable {
                 if (field[x][y] == field2[x][y]) {
                     continue;
                 }
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x * scaleW, y * scaleH, (x + 1) * scaleW, (y + 1) * scaleH, paint);
+                bmp.setPixel(x, y, palette[field[x][y]]);
             }
         }
+        canvas.drawBitmap(bmp, r0, r1, null);
     }
 }
