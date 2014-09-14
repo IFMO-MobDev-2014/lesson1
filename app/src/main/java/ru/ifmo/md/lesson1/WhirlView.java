@@ -22,6 +22,8 @@ class WhirlView extends SurfaceView implements Runnable {
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
+    Paint paint = new Paint();
+
 
     public WhirlView(Context context) {
         super(context);
@@ -104,7 +106,6 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onDraw(Canvas canvas) {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
                 paint.setColor(palette[field[x][y]]);
                 canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
             }
