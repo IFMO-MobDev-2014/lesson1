@@ -12,7 +12,7 @@ class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
     int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080,
             0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
-    char[][] field, bufferField, temp;
+    char[][] field, bufferField, tempField;
     int[] colors;
     int width = 0;
     int height = 0;
@@ -132,9 +132,9 @@ class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
             e.printStackTrace();
         }
 
-        temp = field;
+        tempField = field;
         field = bufferField;
-        bufferField = temp;
+        bufferField = tempField;
     }
 
     @Override
