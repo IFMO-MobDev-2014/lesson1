@@ -38,7 +38,7 @@ class WhirlView extends SurfaceView implements Runnable {
     public void pause() {
         running = false;
         try {
-            thread.join();
+            thread.join();ф
         } catch (InterruptedException ignore) {}
     }
 
