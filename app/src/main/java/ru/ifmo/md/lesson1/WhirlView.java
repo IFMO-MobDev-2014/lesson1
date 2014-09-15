@@ -14,17 +14,18 @@ import java.util.Random;
 * Created by thevery on 11/09/14.
 */
 class WhirlView extends SurfaceView implements Runnable {
-    int [][] field = null;
-    int [][] field2 = null;
-    int [] colors = null;
-    int width = 0;
-    int height = 0;
-    final int scale = 4;
+    final int width = 240;
+    final int height = 320;
+    int [] field = new int[width * height];
+    int [] field2 = new int[width * height];
+    int [] colors = new int[width * height];
+    int wScale;
+    int hScale;
     final int MAX_COLOR = 10;
     final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
     Thread thread = null;
-    Paint paint = new Paint();
+    final Paint paint = new Paint();
     volatile boolean running = false;
 
     public WhirlView(Context context) {
@@ -65,27 +66,26 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        //width = w/scale;
+        //height = h/scale;
+        wScale = w/width;
+        hScale = h/height;
+        Log.i("w", w + " " + width + " " + wScale);
+        Log.i("h", h + " " + height + " " + hScale);
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
-        field2 = new int[width][height];
-        colors = new int[width * height];
         Random rand = new Random();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                field[x][y] = rand.nextInt(MAX_COLOR);
+                field[x + y*width] = rand.nextInt(MAX_COLOR);
             }
         }
     }
 
     void updateField() {
-        for(int x=0; x<width; x++) {
-            System.arraycopy(field[x], 0, field2[x], 0, height);
-        }
+        System.arraycopy(field, 0, field2, 0, width * height);
 
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
@@ -97,19 +97,19 @@ class WhirlView extends SurfaceView implements Runnable {
                         if (y2<0) y2 += height;
                         if (x2>=width) x2 -= width;
                         if (y2>=height) y2 -= height;
-                        if ( (field2[x][y]+1) % MAX_COLOR == field2[x2][y2]) {
-                            field[x][y] = field2[x2][y2];
+                        if ( (field2[x + y*width]+1) % MAX_COLOR == field2[x2 + y2*width]) {
+                            field[x + y*width] = field2[x2 + y2*width];
                         }
                     }
                 }
-                colors[x + y*width] = palette[field[x][y]];
+                colors[x + y*width] = palette[field[x + y*width]];
             }
         }
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        canvas.scale(scale, scale);
+        canvas.scale(wScale, hScale);
         canvas.drawBitmap(colors, 0, width, 0, 0, width, height, false, paint);
     }
 }
