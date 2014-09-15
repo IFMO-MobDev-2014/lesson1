@@ -11,14 +11,18 @@ import java.util.Random;
 
 /**
  * Created by thevery on 11/09/14.
+ * Modified by vlad107 on 15/09/14.
  */
+
 class WhirlView extends SurfaceView implements Runnable {
-    final int MAX_COLOR = 10;
-    int[][] field = null;
-    int[][] field2 = null;
-    int width = 360;
-    int height = 240;
-    int scale = 4;
+    static final int WIDTH = 240;
+    static final int HEIGHT = 320;
+    int[][] field = new int[WIDTH][HEIGHT];
+    int[][] field2 = new int[WIDTH][HEIGHT];
+    static final int MAX_COLOR = 10;
+    Canvas canvas;
+    float scaleX = 1;
+    float scaleY = 1;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
     Thread thread = null;
@@ -45,76 +49,75 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     public void run() {
+        double average = 0;
+        int cnt = 0;
         while (running) {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
-                Canvas canvas = holder.lockCanvas();
+                canvas = holder.lockCanvas();
                 updateField();
-                onDraw(canvas);
+                onDraw();
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                String fps = String.format("%.4f", 1000.0 / ((finishTime - startTime) / 1000000));
-                Log.i("TIME", "Circle: " + fps + " FPS");
-//                try {
-//                    Thread.sleep(16);
-//                } catch (InterruptedException ignore) {
-//                }
+                double fps = 1000.0 / ((finishTime - startTime) / 1000000);
+                String res = String.format("%.1f", fps);
+                average += fps;
+                cnt++;
+                Log.i("TIME", "Circle: " + res + " FPS");
             }
         }
+        average /= cnt;
+        Log.i("TIME", "Average result: " + average + " FPS");
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w / scale;
-        height = h / scale;
+        scaleX = ((float) (w)) / WIDTH;
+        scaleY = ((float) (h)) / HEIGHT;
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
-        field2 = new int[width][height];
         Random rand = new Random();
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
             }
         }
     }
 
     void updateField() {
-        for (int x = 0; x < width; x++) {
-            System.arraycopy(field[x], 0, field2[x], 0, height);
-        }
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                if ((dx == 0) && (dy == 0)) {
-                    continue;
-                }
-                for (int x = 0; x < width; x++) {
-                    for (int y = 0; y < height; y++) {
-                        int x2 = (x + dx + width) % width;
-                        int y2 = (y + dy + height) % height;
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
+                field2[x][y] = field[x][y];
+                found:
+                for (int  dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        if ((dx == 0) && (dy == 0)) {
+                            continue;
+                        }
+                        int x2 = (x + dx + WIDTH) % WIDTH;
+                        int y2 = (y + dy + HEIGHT) % HEIGHT;
                         if ((field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
+                            break found;
                         }
                     }
                 }
             }
         }
-        for (int x = 0; x < width; x++) {
-            System.arraycopy(field2[x], 0, field[x], 0, height);
+        for (int x = 0; x < WIDTH; x++) {
+            System.arraycopy(field2[x], 0, field[x], 0, HEIGHT);
         }
     }
 
-    @Override
-    public void onDraw(Canvas canvas) {
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+    public void onDraw() {
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
                 paint.setColor(palette[field[x][y]]);
-                int left = x * scale;
-                int top = y * scale;
-                canvas.drawRect(left, top, left + scale, top + scale, paint);
-                paint.setColor(0);
+                float left = x * scaleX;
+                float top = y * scaleY;
+                canvas.drawRect(left, top, left + scaleX, top + scaleY, paint);
             }
         }
     }
