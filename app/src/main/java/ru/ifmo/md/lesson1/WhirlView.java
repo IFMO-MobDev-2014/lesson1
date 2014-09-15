@@ -1,8 +1,10 @@
 package ru.ifmo.md.lesson1;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -13,10 +15,14 @@ import java.util.Random;
 * Created by thevery on 11/09/14.
 */
 class WhirlView extends SurfaceView implements Runnable {
-    int [][] field = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
+    byte [][][] field = null;
+    Bitmap bitmap = null;
+    int[] bitmapArray = null;
+    Rect imgRect = null;
+    int curBuffer = 0;
+    int width = 240;
+    int height = 320;
+    int scale = 2;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
@@ -51,63 +57,69 @@ class WhirlView extends SurfaceView implements Runnable {
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
-                try {
+/*                try {
                     Thread.sleep(16);
-                } catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {}//*/
             }
         }
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        imgRect = new Rect(0, 0, w, h);
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
+        field = new byte[2][height + 2][width + 2];
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        bitmapArray = new int[width * height];
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                field[x][y] = rand.nextInt(MAX_COLOR);
+        curBuffer = 0;
+        for (int y = 1; y <= height; y++) {
+            for (int x = 1; x <= width; x++) {
+                field[0][y][x] = (byte)rand.nextInt(MAX_COLOR);
             }
         }
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        byte[][] cur = field[curBuffer], other = field[1 - curBuffer];
+        for (int x = 1; x <= width; x++) {
+            cur[0][x] = cur[height][x];
+            cur[height + 1][x] = cur[1][x];
+        }
 
-                field2[x][y] = field[x][y];
+        for (int y = 0; y <= height + 1; y++) {
+            cur[y][0] = cur[y][width];
+            cur[y][width + 1] = cur[y][1];
+        }
+        for (int y = 1; y <= height; y++) {
+            for (int x = 1; x <= width; x++) {
+                byte oldV = cur[y][x], newV = (byte)((oldV + 1) % MAX_COLOR);
+                other[y][x] = oldV;
 
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
-                            field2[x][y] = field[x2][y2];
-                        }
-                    }
+                if (cur[y - 1][x - 1] == newV || cur[y][x - 1] == newV || cur[y + 1][x - 1] == newV ||
+                    cur[y - 1][x]     == newV ||                          cur[y + 1][x]     == newV ||
+                    cur[y - 1][x + 1] == newV || cur[y][x + 1] == newV || cur[y + 1][x + 1] == newV) {
+                    other[y][x] = newV;
                 }
             }
         }
-        field = field2;
+        curBuffer = 1 - curBuffer;
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+        byte[][] cur = field[curBuffer];
+        int curPos = 0;
+        for (int y = 1; y <= height; y++) {
+            for (int x = 1; x <= width; x++) {
+                bitmapArray[curPos] = palette[cur[y][x]];
+                curPos++;
             }
         }
+        bitmap.setPixels(bitmapArray, 0, width, 0, 0, width, height);
+        canvas.drawBitmap(bitmap, null, imgRect, null);
     }
 }
