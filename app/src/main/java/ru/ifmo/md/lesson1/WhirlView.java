@@ -1,6 +1,7 @@
 package ru.ifmo.md.lesson1;
 
 import android.content.Context;
+import android.util.Log;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -44,10 +45,13 @@ class WhirlView extends SurfaceView implements Runnable {
     public void run() {
         while (running) {
             if (holder.getSurface().isValid()) {
+                long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
+                long finishTime = System.nanoTime();
+                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
             }
         }
     }
