@@ -26,28 +26,15 @@ public class DrawThread extends Thread {
 
     @Override
     public void run() {
-        int fps = 0, cnt = 0;
-        long now = System.nanoTime() / 1000000;
-        Paint p = new Paint();
-        p.setColor(Color.BLACK);
-        p.setTextSize(100);
         while (running) {
-            if (System.nanoTime() / 1000000 - now > 5000) {
-                fps = cnt / 5;
-                cnt = 0;
-                now = System.nanoTime() / 1000000;
-            }
             if (holder.getSurface().isValid()) {
                 Canvas canvas = holder.lockCanvas();
                 synchronized (holder) {
                     whirlView.updateField();
                     whirlView.draw(canvas);
-                    canvas.drawText("FPS = " + fps, 100, 100, p);
-
                 }
                 holder.unlockCanvasAndPost(canvas);
             }
-            ++cnt;
         }
     }
 
