@@ -1,6 +1,11 @@
 package ru.ifmo.md.lesson1;
 
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Updates whirl field.
@@ -15,6 +20,12 @@ class Updater {
             0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080,
             0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     private static final int MAX_COLOR = PALETTE.length;
+    private static final int CPUS = Runtime.getRuntime().availableProcessors();
+
+    private final ExecutorService pool =
+            Executors.newFixedThreadPool(CPUS);
+    private final CompletionService<Void> service = new ExecutorCompletionService<Void>(pool);
+    private final Worker[] workers = new Worker[CPUS];
 
     private int[] field = new int[SIZE];
     private int[] field2 = new int[SIZE];
@@ -22,6 +33,30 @@ class Updater {
 
     private float scaleX;
     private float scaleY;
+
+    class Worker implements Callable<Void> {
+        int a, b;
+
+        Worker(int a, int b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        @Override
+        public Void call() throws Exception {
+            update(a, b);
+
+            return null;
+        }
+    }
+
+    Updater() {
+        final int step = SIZE / CPUS;
+        for (int i = 0; i < CPUS - 1; i++) {
+            workers[i] = new Worker(step * i, step * (i + 1));
+        }
+        workers[CPUS - 1] = new Worker(step * (CPUS - 1), SIZE);
+    }
 
     public void setScaleX(float scaleX) {
         this.scaleX = scaleX;
@@ -70,7 +105,17 @@ class Updater {
 
 
     void updateAll() {
-        update(0, SIZE);
+        for (int i = 0; i < CPUS; i++) {
+            service.submit(workers[i]);
+        }
+
+        for (int i = 0; i < CPUS; i++) {
+            try {
+                service.take();
+            } catch (InterruptedException ignored) {
+
+            }
+        }
 
         int[] buf = field;
         field = field2;
