@@ -81,6 +81,7 @@ class WhirlView extends SurfaceView implements Runnable {
             for (int y=0; y<HEIGHT; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
                 field2[x][y] = field[x][y];
+                bitmap.setPixel(x, y, palette[field[x][y]]);
             }
         }
     }
