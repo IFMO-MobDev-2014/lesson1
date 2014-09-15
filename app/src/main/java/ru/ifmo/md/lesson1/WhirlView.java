@@ -12,40 +12,51 @@ import java.util.Random;
 /**
  * Created by thevery on 11/09/14.
  */
-class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
-
-    private DrawThread drawThread;
-
+class WhirlView extends SurfaceView implements Runnable {
+    int [][] field = null;
     int width = 0;
     int height = 0;
     static final int scale = 4;
+    static final int MAX_COLOR = 10;
+    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    SurfaceHolder holder;
+    Thread thread = null;
+    Bitmap.Config conf = Bitmap.Config.RGB_565;
+    Bitmap scaled_bmp;
+    Bitmap bmp;
+    volatile boolean running = false;
 
     public WhirlView(Context context) {
         super(context);
-        getHolder().addCallback(this);
+        holder = getHolder();
     }
 
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height){
-
+    public void resume() {
+        running = true;
+        thread = new Thread(this);
+        thread.start();
     }
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        drawThread = new DrawThread(getHolder(), width, height);
-        drawThread.setRunning(true);
-        drawThread.start();
+    public void pause() {
+        running = false;
+        try {
+            thread.join();
+        } catch (InterruptedException ignore) {}
     }
 
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        boolean retry = true;
-        drawThread.setRunning(false);
-        while (retry) {
-            try {
-                drawThread.join();
-                retry = false;
-            } catch (InterruptedException e) {
+    public void run() {
+        while (running) {
+            if (holder.getSurface().isValid()) {
+                long startTime = System.nanoTime();
+                Canvas canvas = holder.lockCanvas();
+                updateField();
+                onDraw(canvas);
+                holder.unlockCanvasAndPost(canvas);
+                long finishTime = System.nanoTime();
+                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                try {
+                    Thread.sleep(16);
+                } catch (InterruptedException ignore) {}
             }
         }
     }
@@ -54,40 +65,12 @@ class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         width = w/scale;
         height = h/scale;
-    }
-
-
-}
-
-class DrawThread extends Thread {
-    private boolean runFlag = false;
-    private SurfaceHolder surfaceHolder;
-    private Bitmap bmp;
-    private Bitmap scaled_bmp;
-    Bitmap.Config conf = Bitmap.Config.RGB_565;
-    static final int MAX_COLOR = 10;
-    private int[][] field;
-    private int[][] field2;
-    static final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
-    int width= 0;
-    int height = 0;
-
-    public DrawThread(SurfaceHolder surfaceHolder, int w, int h) {
-        this.surfaceHolder = surfaceHolder;
-        width = w;
-        height = h;
-        field2 = new int[width][height];
+        bmp = Bitmap.createBitmap(width, height, conf);
         initField();
-        bmp = Bitmap.createBitmap(width, height,conf);
-    }
-
-    public void setRunning(boolean run) {
-        runFlag = run;
     }
 
     void initField() {
         field = new int[width][height];
-        bmp = Bitmap.createBitmap(width, height, conf);
         Random rand = new Random();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
@@ -96,33 +79,8 @@ class DrawThread extends Thread {
         }
     }
 
-    @Override
-    public void run() {
-        Canvas canvas;
-        while (runFlag) {
-            canvas = null;
-            try {
-                canvas = surfaceHolder.lockCanvas();
-                long startTime = System.nanoTime();
-                updateField();
-                synchronized (surfaceHolder) {
-                    scaled_bmp = Bitmap.createScaledBitmap(bmp, canvas.getWidth(), canvas.getHeight(), true);
-                    canvas.drawBitmap(scaled_bmp, 0, 0, null);
-                }
-                long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
-                Log.i("FPS", "Circle: " + 1000.0 / (double)((finishTime - startTime) / 1000000));
-            }
-            finally {
-                if (canvas != null) {
-                    surfaceHolder.unlockCanvasAndPost(canvas);
-                }
-            }
-        }
-    }
-
     void updateField() {
-
+        int[][] field2 = new int[width][height];
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
                 field2[x][y] = field[x][y];
@@ -139,12 +97,19 @@ class DrawThread extends Thread {
                         }
                     }
                 }
+            }
+        }
+        field = field2;
+    }
+
+    @Override
+    public void onDraw(Canvas canvas) {
+        for (int x=0; x<width; x++) {
+            for (int y = 0; y < height; y++) {
                 bmp.setPixel(x, y, palette[field[x][y]]);
             }
         }
-        for (int x = 0; x < width; x++) {
-            System.arraycopy(field2[x],0,field[x],0,height);
-        }
+        scaled_bmp = Bitmap.createScaledBitmap(bmp, canvas.getWidth(), canvas.getHeight(), true);
+        canvas.drawBitmap(scaled_bmp, 0, 0, null);
     }
-
 }

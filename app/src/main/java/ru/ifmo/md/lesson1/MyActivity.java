@@ -18,12 +18,12 @@ public class MyActivity extends Activity {
     @Override
     public void onResume() {
         super.onResume();
-        whirlView.();
+        whirlView.resume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        whirlView.surfaceDestroyed();
+        whirlView.pause();
     }
 }
