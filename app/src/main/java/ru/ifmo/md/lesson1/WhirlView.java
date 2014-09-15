@@ -9,14 +9,14 @@ import android.view.SurfaceView;
 
 import java.util.Random;
 
-/**
-* Created by thevery on 11/09/14.
-*/
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
+    int [][] field2 = null;
+    int [] colours = null;
+    int width = 240;
+    int height = 320;
+    float scaleWidth;
+    float scaleHeight;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
@@ -47,26 +47,25 @@ class WhirlView extends SurfaceView implements Runnable {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
-                onDraw(canvas);
+                draw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
-                try {
-                    Thread.sleep(16);
-                } catch (InterruptedException ignore) {}
             }
         }
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        scaleHeight = (float)h / height;
+        scaleWidth = (float)w / width;
         initField();
     }
 
     void initField() {
         field = new int[width][height];
+        field2 = new int[width][height];
+        colours = new int[width * height];
         Random rand = new Random();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
@@ -76,7 +75,6 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
 
@@ -97,17 +95,22 @@ class WhirlView extends SurfaceView implements Runnable {
                 }
             }
         }
+        int [][] tmp = field;
         field = field2;
+        field2 = tmp;
+        int pos = 0;
+        for (int x=0; x<width; x++) {
+            for (int y = 0; y < height; y++) {
+                colours[pos++] = palette[field[x][y]];
+            }
+        }
     }
 
     @Override
-    public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
-            }
-        }
+    public void draw(Canvas canvas) {
+        canvas.save();
+        canvas.scale(scaleWidth, scaleHeight);
+        canvas.drawBitmap(colours, 0, width, 0, 0, width, height, false, null);
+        canvas.restore();
     }
 }
