@@ -1,5 +1,8 @@
 package ru.ifmo.md.lesson1;
 
+import android.util.Log;
+
+import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -26,13 +29,15 @@ class Updater {
             Executors.newFixedThreadPool(CPUS);
     private final CompletionService<Void> service = new ExecutorCompletionService<Void>(pool);
     private final Worker[] workers = new Worker[CPUS];
+    private final Cacher cacher;
 
     private int[] field = new int[SIZE];
     private int[] field2 = new int[SIZE];
-    private final int[] colors = new int[SIZE];
+    private int[] colors = new int[SIZE];
 
     private float scaleX;
     private float scaleY;
+    private Iterator<int[]> repeater;
 
     class Worker implements Callable<Void> {
         final int begin;
@@ -57,6 +62,8 @@ class Updater {
             workers[i] = new Worker(step * i, step * (i + 1));
         }
         workers[CPUS - 1] = new Worker(step * (CPUS - 1), SIZE);
+
+        cacher = new Cacher();
     }
 
     public void setScaleX(float scaleX) {
@@ -106,6 +113,12 @@ class Updater {
 
 
     void updateAll() {
+        if (repeater == null) repeater = cacher.searchForCycle(field);
+        if (repeater != null) {
+            colors = repeater.next();
+            return;
+        }
+
         for (int i = 0; i < CPUS; i++) {
             service.submit(workers[i]);
         }
@@ -117,6 +130,8 @@ class Updater {
 
             }
         }
+
+        if (!cacher.add(field, colors)) Log.i("CACHE", "Limit exceeded");
 
         int[] buf = field;
         field = field2;
