@@ -17,14 +17,17 @@ class WhirlView extends SurfaceView implements Runnable {
     int step = 0;
     int width = 240;
     int height = 320;
-    int devWidth;
-    int devHeight;
-    Paint paint = new Paint();
-    Bitmap bmap = Bitmap.createBitmap(width,height, Bitmap.Config.RGB_565);
+    int countframes = 0;
+    double fps, afps;
+    long ptime;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
     Thread thread = null;
+    Canvas canvas;
+    Rect screen;
+    Paint paint = new Paint();
+    Bitmap bmap = Bitmap.createBitmap(width,height, Bitmap.Config.RGB_565);
     volatile boolean running = false;
 
     public WhirlView(Context context) {
@@ -46,22 +49,25 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     public void run() {
-        Canvas canvas;
         while (running) {
             if (holder.getSurface().isValid()) {
-                long startTime = System.nanoTime();
                 canvas = holder.lockCanvas();
-
+                ptime = System.currentTimeMillis();
                 updateField();
-                canvas.drawBitmap(bmap,null,new Rect(0,0,devWidth,devHeight), paint);
+                canvas.drawBitmap(bmap,null,screen, paint);
+
+
+                canvas.drawText("FPS:" + String.valueOf(Math.round(fps * 10)/ 10.0) + "Average: " + String.valueOf(Math.round(fps * 10) / 10.0) , 60,60,paint );
 
                 holder.unlockCanvasAndPost(canvas);
-                long finishTime = System.nanoTime();
 
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
-                Log.i("FPS", "FPS:" + 1000.0/((finishTime - startTime) / 1000000));
+                ptime = System.currentTimeMillis() - ptime;
+                fps = 1000.0 /ptime;
+                afps = (afps * countframes++ + fps)/countframes;
+
+                Log.i("TIME", "Circle: " + ptime + " AverageFPS: " + afps);
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(16);
                 } catch (InterruptedException ignore) {}
             }
         }
@@ -69,12 +75,13 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        devWidth = w;
-        devHeight = h;
+        screen = new Rect(0,0,w,h);
         initField();
     }
 
     void initField() {
+        paint.setTextSize(50f);
+        paint.setColor(0xFFFFFFFF);
         field = new int[width][height][2];
         Random rand = new Random();
         for (int x=0; x<width; x++) {
@@ -86,19 +93,17 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void updateField() {
         int nstep = (step + 1) % 2;
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        int x2;
+        int y2;
+        for (int y=0; y<height; y++) {
+            for (int x=0; x<width; x++) {
 
                 field[x][y][nstep] = field[x][y][step];
                 boolean loop = true;
                 for (int dx=-1; dx<=1 && loop; dx++) {
                     for (int dy=-1; dy<=1 && loop; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
+                        x2 = (width + x + dx) % width;
+                        y2 = (height + y + dy) % height;
                         if ( (field[x][y][step]+1) % MAX_COLOR == field[x2][y2][step]) {
                             field[x][y][nstep] = field[x2][y2][step];
                             loop = false;
@@ -114,6 +119,6 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
-        canvas.drawBitmap(bmap,null,new Rect(0,0,devWidth,devHeight), paint);
+        canvas.drawBitmap(bmap,null,screen, paint);
     }
 }
