@@ -17,7 +17,7 @@ package ru.ifmo.md.lesson1;
         private final int height = 320;
         int [][] field = new int[width][height];
         int [][] field2 = new int[width][height];
-        int [][] field3 = new int[width][height];
+        int [][] field3 = null;
         int [] colors;
         float scale_x = 1;
         float scale_y = 1;
@@ -128,8 +128,10 @@ package ru.ifmo.md.lesson1;
                 colors[x + y * width] = palette[field[x][y]];
             }
         }
+        canvas.save();
         canvas.scale(scale_x, scale_y);
         canvas.drawBitmap(colors, 0, width, 0, 0, width, height, false, paint);
+        canvas.restore();
     }
 
     @Override

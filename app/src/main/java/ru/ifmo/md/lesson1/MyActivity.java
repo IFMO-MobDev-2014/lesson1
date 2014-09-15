@@ -6,13 +6,13 @@ import android.os.Bundle;
 
 public class MyActivity extends Activity {
 
-    private MainThread mainThread;
+    private MainThreadWrapper mainThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         WhirlView whirlView = new WhirlView(this);
-        mainThread = new MainThread(whirlView);
+        mainThread = new MainThreadWrapper(whirlView);
         setContentView(whirlView);
     }
 
