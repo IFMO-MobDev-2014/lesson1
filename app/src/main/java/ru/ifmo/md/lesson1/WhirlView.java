@@ -79,6 +79,7 @@ class WhirlView extends SurfaceView implements Runnable {
         int[][] field2 =field.clone();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
+                loop:
                 for (int dx=-1; dx<=1; dx++) {
                     for (int dy=-1; dy<=1; dy++) {
                         int x2 = x + dx;
@@ -89,6 +90,7 @@ class WhirlView extends SurfaceView implements Runnable {
                         if (y2>=height) y2 -= height;
                         if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
+                            break loop;
                         }
                     }
                 }
