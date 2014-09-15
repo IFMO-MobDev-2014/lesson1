@@ -12,6 +12,7 @@ import java.util.Random;
 
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
+    int [][] field2 = null;
     int width = 240;
     int height = 320;
     float scaleWidth = 1, scaleHeight = 1;
@@ -62,7 +63,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        rect = new Rect(0, 0, w, h);
+        rect = new Rect(0, 0, width, height);
         scaleWidth = (float) w / width;
         scaleHeight = (float) h / height;
         initField();
@@ -70,6 +71,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void initField() {
         field = new int[width][height];
+        field2 = new int[width][height];
         Random rand = new Random();
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -79,7 +81,6 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        int [][] field2 = new int[width][height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
 
@@ -102,7 +103,9 @@ class WhirlView extends SurfaceView implements Runnable {
                 }
             }
         }
+        int [][] swap_field = field;
         field = field2;
+        field2 = swap_field;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 bitmap.setPixel(x, y, palette[field[x][y]]);
