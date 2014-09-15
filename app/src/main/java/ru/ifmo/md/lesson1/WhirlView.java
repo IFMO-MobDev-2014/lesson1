@@ -1,16 +1,12 @@
 package ru.ifmo.md.lesson1;
 
     import android.content.Context;
-    import android.graphics.Bitmap;
     import android.graphics.Canvas;
     import android.graphics.Paint;
-    import android.util.Log;
     import android.view.SurfaceHolder;
     import android.view.SurfaceView;
-
     import java.util.Random;
 
-    import static java.util.Collections.swap;
 
     /**
      * Created by thevery on 11/09/14.
@@ -54,8 +50,6 @@ package ru.ifmo.md.lesson1;
     }
 
     void updateField() {
-        long startTime = System.nanoTime();
-
         int x2, y2, c;
         for (int x = 1; x < width - 1; x++) {
             for (int y = 1; y < height - 1; y++) {
@@ -126,13 +120,9 @@ package ru.ifmo.md.lesson1;
         field3 = field;
         field = field2;
         field2 = field3;
-
-        long finishTime = System.nanoTime();
-        Log.i("TIME", "Update: " + (finishTime - startTime) / 1000000);
     }
 
     public void render(Canvas canvas) {
-        long startTime = System.nanoTime();
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 colors[x + y * width] = palette[field[x][y]];
@@ -140,8 +130,6 @@ package ru.ifmo.md.lesson1;
         }
         canvas.scale(scale_x, scale_y);
         canvas.drawBitmap(colors, 0, width, 0, 0, width, height, false, paint);
-        long finishTime = System.nanoTime();
-        Log.i("TIME", "Drawing: " + (finishTime - startTime) / 1000000);
     }
 
     @Override

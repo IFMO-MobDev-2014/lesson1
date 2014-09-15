@@ -34,9 +34,7 @@ public class MainThread implements Runnable{
         Canvas canvas;
         float sumFps = 0;
         int frameCount = 0;
-        //synchronized (whirlView) {
             while (running) {
-
                 if (whirlView.holder.getSurface().isValid()) {
                     long startTime = System.nanoTime();
                     canvas = whirlView.holder.lockCanvas();
@@ -47,8 +45,6 @@ public class MainThread implements Runnable{
                     sumFps += 1e9 / (finishTime - startTime);
                     Log.i("TIME", "Circle: " + sumFps / (++frameCount) + " fps");
                 }
-                //whirlView.notify();
             }
-        //}
     }
 }
