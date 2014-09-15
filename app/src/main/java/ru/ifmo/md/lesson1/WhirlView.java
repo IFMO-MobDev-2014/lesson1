@@ -1,5 +1,6 @@
 package ru.ifmo.md.lesson1;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -63,12 +64,13 @@ class WhirlView extends SurfaceView {
 
     class DisplayTask extends TimerTask {
         @Override
+        @SuppressLint("WrongCall")
         public void run() {
             if (getHolder().getSurface().isValid()) {
                 perfLog.tick();
                 toDraw = drawer.nextBitmap();
                 Canvas canvas = getHolder().lockCanvas();
-                draw(canvas);
+                onDraw(canvas);
                 getHolder().unlockCanvasAndPost(canvas);
             }
         }
