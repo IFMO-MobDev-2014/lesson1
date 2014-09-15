@@ -74,8 +74,8 @@ class WhirlView extends SurfaceView implements Runnable {
         pixels = new int[width * height];
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
                 field2[x][y] = field[x][y];
             }
@@ -83,20 +83,57 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
-                            field2[x][y] = field[x2][y2];
-                        }
-                    }
+        int previousX;
+        int nextX;
+        int previousY;
+        int nextY;
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                if (x == 0) {
+                    previousX = width - 1;
+                } else {
+                    previousX = x - 1;
+                }
+                if (x == width - 1) {
+                    nextX = 0;
+                } else {
+                    nextX = x + 1;
+                }
+                if (y == 0) {
+                    previousY = height - 1;
+                } else {
+                    previousY = y - 1;
+                }
+                if (y == height - 1) {
+                    nextY = 0;
+                } else {
+                    nextY = y + 1;
+                }
+
+                if ((field[x][y] == MAX_COLOR - 1 && field[previousX][previousY] == 0) || (field[x][y] + 1 == field[previousX][previousY])) {
+                    field2[x][y] = field[previousX][previousY];
+                }
+                if ((field[x][y] == MAX_COLOR - 1 && field[previousX][y] == 0) || (field[x][y] + 1 == field[previousX][y])) {
+                    field2[x][y] = field[previousX][y];
+                }
+                if ((field[x][y] == MAX_COLOR - 1 && field[previousX][nextY] == 0) || (field[x][y] + 1 == field[previousX][nextY])) {
+                    field2[x][y] = field[previousX][nextY];
+                }
+                if ((field[x][y] == MAX_COLOR - 1 && field[x][previousY] == 0) || (field[x][y] + 1 == field[x][previousY])) {
+                    field2[x][y] = field[x][previousY];
+                }
+                if ((field[x][y] == MAX_COLOR - 1 && field[x][nextY] == 0) || (field[x][y] + 1 == field[x][nextY])) {
+                    field2[x][y] = field[x][nextY];
+                }
+                if ((field[x][y] == MAX_COLOR - 1 && field[nextX][previousY] == 0) || (field[x][y] + 1 == field[nextX][previousY])) {
+                    field2[x][y] = field[nextX][previousY];
+                }
+                if ((field[x][y] == MAX_COLOR - 1 && field[nextX][y] == 0) || (field[x][y] + 1 == field[nextX][y])) {
+                    field2[x][y] = field[nextX][y];
+                }
+                if ((field[x][y] == MAX_COLOR - 1 && field[nextX][nextY] == 0) || (field[x][y] + 1 == field[nextX][nextY])) {
+                    field2[x][y] = field[nextX][nextY];
                 }
             }
         }
