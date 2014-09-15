@@ -16,7 +16,6 @@ class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
     int width = 320;
     int height = 240;
-    
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     float rescaledX,rescaledY;
