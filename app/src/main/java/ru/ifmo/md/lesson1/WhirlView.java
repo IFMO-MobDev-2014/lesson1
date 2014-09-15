@@ -16,6 +16,7 @@ import java.util.Random;
 class WhirlView extends SurfaceView implements Runnable {
     static final int WIDTH = 240;
     static final int HEIGHT = 320;
+    static final int[] PALETTE = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     static final Random RAND = new Random();
     int[][] field = new int[WIDTH][HEIGHT];
     int[][] field2 = new int[WIDTH][HEIGHT];
@@ -24,7 +25,6 @@ class WhirlView extends SurfaceView implements Runnable {
     Canvas canvas;
     float scaleX = 1;
     float scaleY = 1;
-    int[] PALETTE = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -89,8 +89,8 @@ class WhirlView extends SurfaceView implements Runnable {
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
                 field2[x][y] = field[x][y];
-                found:
-                for (int  dx = -1; dx <= 1; dx++) {
+                boolean found = false;
+                for (int  dx = -1; dx <= 1 && !found; dx++) {
                     for (int dy = -1; dy <= 1; dy++) {
                         if ((dx == 0) && (dy == 0)) {
                             continue;
@@ -99,7 +99,8 @@ class WhirlView extends SurfaceView implements Runnable {
                         int y2 = (y + dy + HEIGHT) % HEIGHT;
                         if ((field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
-                            break found;
+                            found = true;
+                            break;
                         }
                     }
                 }
