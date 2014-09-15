@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.Locale;
 import java.util.Random;
 
 /**
@@ -16,9 +17,9 @@ import java.util.Random;
  */
 
 class WhirlView extends SurfaceView implements Runnable {
-    private static final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000,
+    private static final int[] PALETTE = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000,
             0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
-    private static final int MAX_COLOR = palette.length;
+    private static final int MAX_COLOR = PALETTE.length;
 
     private static final int MIN_SIDE = 240;
     private static final int MAX_SIDE = 320;
@@ -94,18 +95,20 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
 
-    private static final Paint textPaint = new Paint();
+    private static final Paint TEXT_PAINT = new Paint();
     static {
-        textPaint.setColor(Color.BLACK);
-        textPaint.setFakeBoldText(true);
-        textPaint.setTextSize(40);
+        TEXT_PAINT.setColor(Color.BLACK);
+        TEXT_PAINT.setFakeBoldText(true);
+        TEXT_PAINT.setTextSize(40);
     }
 
     public void drawIt(Canvas canvas) {
+        canvas.save();
         canvas.scale(widthScale, heightScale);
         canvas.drawBitmap(colors, 0, width, 0, 0, width, height, false, null);
         // low level method to improve performance
-        canvas.drawText((int) (fps + .5) + "fps", 10, 45, textPaint);
+        canvas.drawText(String.format(Locale.US, "%.5ffps", fps), 10, 45, TEXT_PAINT);
+        canvas.restore();
     }
 
     @Override
@@ -123,7 +126,7 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
 
-    private Random random = new Random();
+    private static final Random RANDOM = new Random();
 
     private void initField() {
         field = new int[height][width]; // changed dimensions to improve colors caching
@@ -132,7 +135,7 @@ class WhirlView extends SurfaceView implements Runnable {
         updateAll = false;
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                field[y][x] = random.nextInt(MAX_COLOR);
+                field[y][x] = RANDOM.nextInt(MAX_COLOR);
             }
         }
     }
@@ -144,7 +147,7 @@ class WhirlView extends SurfaceView implements Runnable {
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
                     field[y][x] = (field[y][x] + 1) % MAX_COLOR;
-                    colors[y * width + x] = palette[field[y][x]];
+                    colors[y * width + x] = PALETTE[field[y][x]];
                 }
             }
         } else {
@@ -152,6 +155,7 @@ class WhirlView extends SurfaceView implements Runnable {
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
                     field2[y][x] = field[y][x];
+
                     outer:
                     for (int dx = -1; dx <= 1; ++dx) {
                         for (int dy = -1; dy <= 1; ++dy) {
@@ -172,7 +176,7 @@ class WhirlView extends SurfaceView implements Runnable {
                             if ((field[y][x] + 1) % MAX_COLOR == field[y2][x2]) {
                                 tot++;
                                 field2[y][x] = field[y2][x2];
-                                colors[y * width + x] = palette[field2[y][x]];
+                                colors[y * width + x] = PALETTE[field2[y][x]];
                                 break outer;
                             }
                         }
