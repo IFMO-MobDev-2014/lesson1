@@ -2,7 +2,6 @@ package ru.ifmo.md.lesson1;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -17,16 +16,17 @@ import java.util.Random;
 class WhirlView extends SurfaceView implements Runnable {
     static final int WIDTH = 240;
     static final int HEIGHT = 320;
+    static final Random RAND = new Random();
     int[][] field = new int[WIDTH][HEIGHT];
     int[][] field2 = new int[WIDTH][HEIGHT];
+    int[] colors = new int[WIDTH * HEIGHT];
     static final int MAX_COLOR = 10;
     Canvas canvas;
     float scaleX = 1;
     float scaleY = 1;
-    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    int[] PALETTE = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
     Thread thread = null;
-    Paint paint = new Paint();
     volatile boolean running = false;
 
     public WhirlView(Context context) {
@@ -78,10 +78,9 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void initField() {
-        Random rand = new Random();
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
-                field[x][y] = rand.nextInt(MAX_COLOR);
+                field[x][y] = RAND.nextInt(MAX_COLOR);
             }
         }
     }
@@ -114,11 +113,10 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onDraw() {
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
-                paint.setColor(palette[field[x][y]]);
-                float left = x * scaleX;
-                float top = y * scaleY;
-                canvas.drawRect(left, top, left + scaleX, top + scaleY, paint);
+                colors[y * WIDTH + x] = PALETTE[field[x][y]];
             }
         }
+        canvas.scale(scaleX, scaleY);
+        canvas.drawBitmap(colors, 0, WIDTH, 0, 0, WIDTH, HEIGHT, false, null);
     }
 }
