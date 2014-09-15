@@ -5,10 +5,12 @@ import android.graphics.Canvas;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.graphics.Paint;
 
 import java.util.Random;
 
 class WhirlView extends SurfaceView implements Runnable {
+    Paint paint = new Paint();
     Canvas canvas;
     int width = 240;
     int height = 320;
@@ -23,10 +25,12 @@ class WhirlView extends SurfaceView implements Runnable {
     int[] colours = new int[width * height];
     float xScale;
     float yScale;
+    float fps = 0;
 
     public WhirlView(Context context) {
         super(context);
         holder = getHolder();
+        paint.setTextSize(20);
     }
 
     public void resume() {
@@ -52,7 +56,8 @@ class WhirlView extends SurfaceView implements Runnable {
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
-                Log.i("FPS", "Circle: " + 1000.0 / (float)((finishTime - startTime) / 1000000));
+                fps = 1000.0f / (float)((finishTime - startTime) / 1000000.0);
+                Log.i("FPS", "FPS = " +  fps);
             }
         }
     }
@@ -106,5 +111,6 @@ class WhirlView extends SurfaceView implements Runnable {
                 colours[x + y * width] = palette[field[x][y]];
         canvas.scale(xScale, yScale);
         canvas.drawBitmap(colours, 0, width, 0, 0, width, height, false, null);
+        canvas.drawText("FPS = " + String.format("%.1f", fps), 20, 20, paint);
     }
 }
