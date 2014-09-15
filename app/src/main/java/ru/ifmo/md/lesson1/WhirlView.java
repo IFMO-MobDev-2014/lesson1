@@ -68,7 +68,7 @@ class WhirlView extends SurfaceView {
                 perfLog.tick();
                 toDraw = drawer.nextBitmap();
                 Canvas canvas = getHolder().lockCanvas();
-                onDraw(canvas);
+                draw(canvas);
                 getHolder().unlockCanvasAndPost(canvas);
             }
         }
