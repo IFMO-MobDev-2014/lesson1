@@ -1,8 +1,9 @@
 package ru.ifmo.md.lesson1;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -10,18 +11,22 @@ import android.view.SurfaceView;
 import java.util.Random;
 
 /**
-* Created by thevery on 11/09/14.
-*/
+ * Created by thevery on 11/09/14.
+ * Modified by baba-beda on 15/09/14
+ */
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
-    int width = 0;
-    int height = 0;
+    int width = 240;
+    int height = 320;
     int scale = 4;
     final int MAX_COLOR = 10;
-    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    int[] palette = {0xFF191970, 0xFF000080, 0xFF6495ED, 0xFF0000CD, 0xFF4169E1, 0xFF0000FF, 0xFF1E90FF, 0xFF00BFFF, 0xFF87CEFA, 0xFF4682B4};
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
+    Bitmap screen = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    int [][] field2 = null;
+    Rect my_area;
 
     public WhirlView(Context context) {
         super(context);
@@ -47,7 +52,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
-                onDraw(canvas);
+                draw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
@@ -62,10 +67,12 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         width = w/scale;
         height = h/scale;
+        my_area = new Rect(0, 0, w, h);
         initField();
     }
 
     void initField() {
+        screen = Bitmap.createScaledBitmap(screen, width, height, false);
         field = new int[width][height];
         Random rand = new Random();
         for (int x=0; x<width; x++) {
@@ -76,7 +83,7 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
+        field2 = new int[width][height];
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
 
@@ -101,13 +108,12 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     @Override
-    public void onDraw(Canvas canvas) {
+    public void draw(Canvas canvas) {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+                screen.setPixel(x, y, palette[field[x][y]]);
             }
         }
+        canvas.drawBitmap(Bitmap.createScaledBitmap(screen, canvas.getWidth(), canvas.getHeight(), false), null, my_area, null);
     }
 }
