@@ -32,4 +32,3 @@ http://en.wikipedia.org/wiki/Cyclic_cellular_automaton
 Оценки:
 =======
 TBD
-
