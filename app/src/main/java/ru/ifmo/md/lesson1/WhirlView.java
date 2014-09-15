@@ -1,8 +1,9 @@
 package ru.ifmo.md.lesson1;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -10,15 +11,19 @@ import android.view.SurfaceView;
 import java.util.Random;
 
 /**
-* Created by thevery on 11/09/14.
-*/
+ * Created by thevery on 11/09/14.
+ * Modified by Alexey Katsman on 15/09/14.
+ */
 class WhirlView extends SurfaceView implements Runnable {
-    int [][] field = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
-    final int MAX_COLOR = 10;
+    final static int width = 240;
+    final static int height = 320;
+    int[][] field = new int[width][height];
+    int[][] field2 = new int[width][height];
+    final static short MAX_COLOR = 10;
+    final static Rect src = new Rect(0, 0, width, height);
+    Rect dst = null;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -47,10 +52,10 @@ class WhirlView extends SurfaceView implements Runnable {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
-                onDraw(canvas);
+                draw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                Log.i("Frames Per Second", "Circle: " + 1e9 / (double) (finishTime - startTime));
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {}
@@ -60,54 +65,87 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        dst = new Rect(0, 0, w, h);
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
         Random rand = new Random();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
+                field2[x][y] = field[x][y];
             }
         }
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
+                int current_color = field[x][y] + 1;
+                current_color %= MAX_COLOR;
 
-                field2[x][y] = field[x][y];
+                int x1 = x == 0 ? width - 1 : x - 1;
+                int x3 = x == width - 1 ? 0 : x + 1;
+                int y1 = y == 0 ? height - 1 : y - 1;
+                int y3 = y == height - 1 ? 0 : y + 1;
 
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
-                            field2[x][y] = field[x2][y2];
-                        }
-                    }
+                if (current_color == field[x3][y3]) {
+                    field2[x][y] = current_color;
+                    bitmap.setPixel(x, y, palette[current_color]);
+                    continue;
+                }
+
+                if (current_color == field[x3][y]) {
+                    field2[x][y] = current_color;
+                    bitmap.setPixel(x, y, palette[current_color]);
+                    continue;
+                }
+
+                if (current_color == field[x3][y1]) {
+                    field2[x][y] = current_color;
+                    bitmap.setPixel(x, y, palette[current_color]);
+                    continue;
+                }
+
+                if (current_color == field[x][y3]) {
+                    field2[x][y] = current_color;
+                    bitmap.setPixel(x, y, palette[current_color]);
+                    continue;
+                }
+
+                if (current_color == field[x][y1]) {
+                    field2[x][y] = current_color;
+                    bitmap.setPixel(x, y, palette[current_color]);
+                    continue;
+                }
+
+                if (current_color == field[x1][y3]) {
+                    field2[x][y] = current_color;
+                    bitmap.setPixel(x, y, palette[current_color]);
+                    continue;
+                }
+
+                if (current_color == field[x1][y]) {
+                    field2[x][y] = current_color;
+                    bitmap.setPixel(x, y, palette[current_color]);
+                    continue;
+                }
+
+                if (current_color == field[x1][y1]) {
+                    field2[x][y] = current_color;
+                    bitmap.setPixel(x, y, palette[current_color]);
                 }
             }
         }
-        field = field2;
+
+        for (int x = 0; x < width; x++) {
+            System.arraycopy(field2[x], 0, field[x], 0, height);
+        }
     }
 
     @Override
-    public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
-            }
-        }
+    public void draw(Canvas canvas) {
+        canvas.drawBitmap(bitmap, src, dst, null);
     }
 }
