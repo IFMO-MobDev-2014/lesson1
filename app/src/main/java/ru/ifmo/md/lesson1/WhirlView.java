@@ -10,12 +10,15 @@ import java.util.Random;
 
 class WhirlView extends SurfaceView implements Runnable {
     Paint paint = new Paint();
-    int [][] field = null;
+
     int width = 320;
     int height = 240;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
-    float rescaledX,rescaledY;
+    float rescaledX;
+    float rescaledY;
+    int[][] field = new int [width][height];
+    int[] colourholder= new int[width*height];
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -98,9 +101,10 @@ class WhirlView extends SurfaceView implements Runnable {
     public void draw(Canvas canvas) {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*rescaledX, y*rescaledY, (x+1)*rescaledX, (y+1)*rescaledY, paint);
+                colourholder[x+y*width]=palette[field[x][y]];
             }
         }
+        canvas.scale(rescaledX,rescaledY);
+        canvas.drawBitmap(colourholder,0,width,0,0,width,height,false,paint);
     }
 }
