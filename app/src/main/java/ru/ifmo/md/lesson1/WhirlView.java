@@ -21,6 +21,9 @@ class WhirlView extends SurfaceView implements Runnable {
     Bitmap bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    boolean changeAll = false;
+    int currentBitmap = 0;
+    Bitmap[] bitmaps = new Bitmap[MAX_COLOR];
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -78,35 +81,56 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        for (int x=0; x<WIDTH; x++) {
-            for (int y=0; y<HEIGHT; y++) {
+        if (changeAll) {
+            currentBitmap = currentBitmap == MAX_COLOR-1 ? 0 : currentBitmap + 1;
+            bitmap = bitmaps[currentBitmap];
+        }
+        else {
+            changeAll = true;
+            for (int x = 0; x < WIDTH; x++) {
+                for (int y = 0; y < HEIGHT; y++) {
 
-                boolean found = false;
-                int cur = field[x][y] == MAX_COLOR-1 ? 0 : field[x][y]+1;
+                    boolean found = false;
+                    int cur = field[x][y] == MAX_COLOR-1 ? 0 : field[x][y] + 1;
 
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2==-1) x2 = WIDTH-1;
-                        else if (x2==WIDTH) x2 = 0;
-                        if (y2==-1) y2 = HEIGHT-1;
-                        else if (y2==HEIGHT) y2 = 0;
-                        if (cur == field[x2][y2]) {
-                            field2[x][y] = cur;
-                            bitmap.setPixel(x, y, palette[cur]);
-                            found = true;
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dy = -1; dy <= 1; dy++) {
+                            int x2 = x + dx;
+                            int y2 = y + dy;
+                            if (x2 == -1) x2 = WIDTH - 1;
+                            else if (x2 == WIDTH) x2 = 0;
+                            if (y2 == -1) y2 = HEIGHT - 1;
+                            else if (y2 == HEIGHT) y2 = 0;
+                            if (cur == field[x2][y2]) {
+                                field2[x][y] = cur;
+                                bitmap.setPixel(x, y, palette[cur]);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) {
                             break;
                         }
                     }
-                    if (found) {
-                        break;
+                    if (!found) {
+                        changeAll = false;
                     }
                 }
             }
-        }
-        for (int x=0; x<WIDTH; x++) {
-            System.arraycopy(field2[x], 0, field[x], 0, HEIGHT);
+            for (int x = 0; x < WIDTH; x++) {
+                System.arraycopy(field2[x], 0, field[x], 0, HEIGHT);
+            }
+            if (changeAll) {
+                for (int i=0; i<MAX_COLOR; i++) {
+                    bitmaps[i] = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
+                    for (int x=0; x<WIDTH; x++) {
+                        for (int y=0; y<HEIGHT; y++) {
+                            //field[x][y] = field[x][y] == MAX_COLOR-1 ? 0 : field[x][y]+1;
+                            bitmaps[i].setPixel(x, y, palette[(field[x][y] + i) % MAX_COLOR]);
+                        }
+                    }
+                }
+            }
         }
     }
 
