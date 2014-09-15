@@ -14,11 +14,12 @@ import java.util.Random;
 */
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
+    int width = 320;
+    int height = 240;
+    
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    float rescaledX,rescaledY;
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -61,8 +62,9 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        rescaledX=(float) w / width;
+        rescaledY=(float) h / height;
+
         initField();
     }
 
@@ -81,7 +83,6 @@ class WhirlView extends SurfaceView implements Runnable {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
 
-                field2[x][y] = field[x][y];
 
                 for (int dx=-1; dx<=1; dx++) {
                     for (int dy=-1; dy<=1; dy++) {
@@ -107,7 +108,7 @@ class WhirlView extends SurfaceView implements Runnable {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
                 paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+                canvas.drawRect(x*rescaledX, y*rescaledY, (x+1)*rescaledX, (y+1)*rescaledY, paint);
             }
         }
     }
