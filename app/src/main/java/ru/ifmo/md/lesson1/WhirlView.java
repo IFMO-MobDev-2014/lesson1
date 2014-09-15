@@ -56,7 +56,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000 + ", fps: " + 1E9 / (finishTime - startTime));
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {}
