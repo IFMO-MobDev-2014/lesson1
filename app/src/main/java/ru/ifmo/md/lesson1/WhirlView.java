@@ -91,6 +91,7 @@ class WhirlView extends SurfaceView implements Runnable {
                         int x2 = x + dx;
                         int y2 = y + dy;
                         if (x2 < 0) x2 += width;
+                        if (x2 >= width) x2 -= width;
                         if (y2 < 0) y2 += height;
                         if (y2 >= height) y2 -= height;
                         if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
