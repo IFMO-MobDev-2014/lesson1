@@ -6,13 +6,10 @@ import android.graphics.Paint;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
 import java.util.Random;
 
-/**
-* Created by thevery on 11/09/14.
-*/
 class WhirlView extends SurfaceView implements Runnable {
+    Paint paint = new Paint();
     int [][] field = null;
     int width = 320;
     int height = 240;
@@ -47,7 +44,6 @@ class WhirlView extends SurfaceView implements Runnable {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
-
                 draw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
@@ -63,7 +59,6 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         rescaledX=(float) w / width;
         rescaledY=(float) h / height;
-
         initField();
     }
 
@@ -81,8 +76,6 @@ class WhirlView extends SurfaceView implements Runnable {
         int[][] field2 =field.clone();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-
-
                 for (int dx=-1; dx<=1; dx++) {
                     for (int dy=-1; dy<=1; dy++) {
                         int x2 = x + dx;
@@ -103,7 +96,6 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void draw(Canvas canvas) {
-        Paint paint = new Paint();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
                 paint.setColor(palette[field[x][y]]);
