@@ -15,18 +15,20 @@ import java.util.Random;
  */
 class WhirlView extends SurfaceView implements Runnable {
     int[][] field = null;
+    int[][] field2 = null;
     int width = 240;
     int height = 320;
+    int displayWidth, displayHeight;
     float scaleW = 4, scaleH = 4;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
-    int[][] field2;
     Bitmap bmp;
     Rect r0 = new Rect(0, 0, width, height);
     Rect r1;
+
     public WhirlView(Context context) {
         super(context);
         holder = getHolder();
@@ -70,6 +72,8 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         scaleW = (float)w / width;
         scaleH = (float)h / height;
+        displayHeight = h;
+        displayWidth = w;
         r1 = new Rect(0, 0, w, h);
         initField();
     }
