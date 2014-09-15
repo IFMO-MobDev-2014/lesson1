@@ -86,8 +86,8 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void updateField() {
         int[][] field2 = new int[width][height];
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
 
                 field2[x][y] = field[x][y];
 
