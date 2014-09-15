@@ -24,10 +24,9 @@ class WhirlView extends SurfaceView implements Runnable {
     int W, H;
     float scaleX;
     float scaleY;
-    boolean flag;
 
     HashMap< Long, PictureData > q = new HashMap<Long, PictureData >();
-    Paint [] paint = new Paint[MAX_COLOR];
+    //Paint [] paint = new Paint[MAX_COLOR];
     int width = 0;
     int height = 0;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
@@ -69,61 +68,43 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
 
-    public void test() {
-        if (flag) return;
-        flag = true;
-        Log.i("start: ", "tmp");
-        Rect dst = new Rect(0, 0, W / 2, H / 2);
-        Bitmap r = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_4444);
-        Canvas canvas = holder.lockCanvas();
-        for (int i = 0; i < width; i++)
-            for (int j = 0; j < height; j++)
-                r.setPixel(i, j, palette[2]);
-        canvas.drawBitmap(r, null, dst, null);
-
-        holder.unlockCanvasAndPost(canvas);
-
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     public void run() {
 
         while (running) {
             if (holder.getSurface().isValid()) {
                 Log.i("w h: ", " " + width + " " + height);
-                //test();
                 Canvas canvas = holder.lockCanvas();
                 long startTime = System.nanoTime();
-
                 Long hash = calcHash(field);
                 Bitmap bitmap;
                 if (q.containsKey(hash)) {
                     field = q.get(hash).field;
                     bitmap = q.get(hash).bitmap.copy(Bitmap.Config.ARGB_4444, true);
-//                    try {
-//                        Thread.sleep(50);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
                 } else {
-                    Log.i("second case ", " ");
+                    long t1 = System.nanoTime();
                     updateField();
                     int [][] fieldCopy = new int[width][height];
                     for (int i = 0; i < width; i++)
                         for (int j = 0; j < height; j++)
                             fieldCopy[i][j] = field[i][j];
+                    long t2 = System.nanoTime();
                     bitmap = onDraw2();
                     q.put(hash, new PictureData(fieldCopy, bitmap));
+                    long t3 = System.nanoTime();
+
+                    Log.i("TIME", "Circle2: " + (t2 - t1) / 1000000);
+                    Log.i("TIME", "Circle3: " + (t3 - t2) / 1000000);
                 }
+                long t4 = System.nanoTime();
                 Rect dst = new Rect(0, 0, W, H);
                 canvas.drawBitmap(bitmap, null, dst, null);
+                long t5 = System.nanoTime();
+                Log.i("TIME", "Circle4: " + (t5 - t4) / 1000000);
+
 
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
+                Log.i("TIME", "Circle5 finist: " + (finishTime - t5) / 1000000);
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
             }
         }
@@ -148,10 +129,6 @@ class WhirlView extends SurfaceView implements Runnable {
     void initField() {
         field = new int[width][height];
         field2 = new int[width][height];
-        for (int i = 0; i < MAX_COLOR; i++) {
-            paint[i] = new Paint();
-            paint[i].setColor(palette[i]);
-        }
 
         Random rand = new Random();
         rand.setSeed(System.nanoTime());
@@ -200,13 +177,5 @@ class WhirlView extends SurfaceView implements Runnable {
         return bitmap;
     }
 
-    @Override
-    public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                canvas.drawRect(x*scaleX, y*scaleY, (x+1)*scaleX, (y+1)*scaleY, paint[field[x][y]]);
-            }
-        }
-    }
 }
 
