@@ -9,12 +9,12 @@ import android.view.SurfaceView;
 import java.util.Random;
 
 /**
-* Created by thevery on 11/09/14.
-*/
+ * Created by thevery on 11/09/14.
+ */
 class WhirlView extends SurfaceView implements Runnable {
-    int [][] field = null;
-    int [][] field2 = null;
-    int [] colors = null;
+    int[][] field = null;
+    int[][] field2 = null;
+    int[] bits = null;
     int width = 240;
     int height = 320;
     float scale_W = 1;
@@ -40,7 +40,8 @@ class WhirlView extends SurfaceView implements Runnable {
         running = false;
         try {
             thread.join();
-        } catch (InterruptedException ignore) {}
+        } catch (InterruptedException ignore) {
+        }
     }
 
     public void run() {
@@ -55,7 +56,8 @@ class WhirlView extends SurfaceView implements Runnable {
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
                 try {
                     Thread.sleep(16);
-                } catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {
+                }
             }
         }
     }
@@ -64,8 +66,8 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         /*width = w/scale;
         height = h/scale;*/
-        scale_H = (float) w/width;
-        scale_W = (float) h/height;
+        scale_H = (float) w / width;
+        scale_W = (float) h / height;
         Log.i("TIME", "Circle: " + scale_W);
         Log.i("TIME", "Circle: " + scale_H);
         initField();
@@ -74,45 +76,46 @@ class WhirlView extends SurfaceView implements Runnable {
     void initField() {
         field = new int[width][height];
         field2 = new int[width][height];
-        colors = new int[width*height];
+        bits = new int[width * height];
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
             }
         }
     }
 
     void updateField() {
-        for (int x=0; x<width; x++) {
-            System.arraycopy(field[x],0,field2[x],0,height);
+
+        for (int x = 0; x < width; x++) {
+            System.arraycopy(field[x], 0, field2[x], 0, height);
         }
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
                         int x2 = x + dx;
                         int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
+                        if (x2 < 0) x2 += width;
+                        if (y2 < 0) y2 += height;
+                        if (x2 >= width) x2 -= width;
+                        if (y2 >= height) y2 -= height;
+                        if ((field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
                         }
                     }
                 }
-                colors[x + y * width] = palette[field2[x][y]];
+                bits[x + y * width] = palette[field2[x][y]];
             }
         }
-        for (int x=0; x<width; x++) {
-            System.arraycopy(field2[x],0,field[x],0,height);
+        for (int x = 0; x < width; x++) {
+            System.arraycopy(field2[x], 0, field[x], 0, height);
         }
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        canvas.scale(scale_H,scale_W);
-        canvas.drawBitmap(colors,0,width,0,0,width,height,false,null);
+        canvas.scale(scale_H, scale_W);
+        canvas.drawBitmap(bits, 0, width, 0, 0, width, height, false, null);
     }
 }
