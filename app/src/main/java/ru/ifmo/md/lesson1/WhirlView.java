@@ -20,7 +20,7 @@ class WhirlView extends SurfaceView implements Runnable {
     int width = 240;
     int height = 320;
     Rect current = new Rect(0, 0, width, height);
-    Rect scaled = current; // I think that onSizeChanged could be never called
+    Rect scaled = current;
     float scaleW = 4;
     float scaleH = 4;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
