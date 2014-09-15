@@ -79,6 +79,7 @@ class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
                     newColor -= MAX_COLOR;
                 }
 
+                //Expanded two loops to 9 ifs
                 if (newColor == field[x - 1][y - 1])
                     bufferField[x][y] = field[x - 1][y - 1];
                 else if (newColor == field[x - 1][y])
@@ -98,6 +99,7 @@ class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
                 else if (newColor == field[x + 1][y + 1])
                     bufferField[x][y] = field[x + 1][y + 1];
 
+                //Computing an 1D array for bitmap
                 colors[y * width + x] = palette[field[x][y]];
             }
         }
@@ -136,7 +138,8 @@ class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
     class FieldUpdater extends Thread {
         private boolean running = false;
 
-        public void processBoard() {
+        //Processes border of the field
+        public void processBorder() {
             int x2;
             int y2;
 
@@ -216,7 +219,7 @@ class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
             top.start();
             bottom.start();
 
-            processBoard();
+            processBorder();
 
             try {
                 top.join();
@@ -226,6 +229,7 @@ class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
             }
 
             synchronized (locker) {
+                //Wait until field will redraw itself
                 while (updatingField) {
                     try {
                         locker.wait(1);
@@ -291,6 +295,7 @@ class WhirlView extends SurfaceView implements SurfaceHolder.Callback {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas(null);
                 synchronized (locker) {
+                    //Wait until field will reupdate itself
                     while (!updatingField) {
                         try {
                             locker.wait(1);
