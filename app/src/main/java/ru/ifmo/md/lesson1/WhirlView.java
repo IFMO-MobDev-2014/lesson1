@@ -10,7 +10,7 @@ import android.view.SurfaceView;
  * Created by thevery on 11/09/14.
  */
 class WhirlView extends SurfaceView implements Runnable {
-    private final FpsLogger fpsLogger = new FpsLogger(2);
+    private final FpsLogger fpsLogger = new FpsLogger();
     private final SurfaceHolder holder;
     private final Updater updater = new Updater();
 

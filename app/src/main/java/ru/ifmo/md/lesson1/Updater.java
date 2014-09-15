@@ -35,16 +35,17 @@ class Updater {
     private float scaleY;
 
     class Worker implements Callable<Void> {
-        int a, b;
+        final int begin;
+        final int end;
 
-        Worker(int a, int b) {
-            this.a = a;
-            this.b = b;
+        Worker(int begin, int end) {
+            this.begin = begin;
+            this.end = end;
         }
 
         @Override
         public Void call() throws Exception {
-            update(a, b);
+            update(begin, end);
 
             return null;
         }

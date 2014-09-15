@@ -10,14 +10,14 @@ import android.util.Log;
 class FpsLogger {
     private int count;
 
-    public FpsLogger(final int period) {
+    public FpsLogger() {
         new Thread(new Runnable() {
             @Override
             public synchronized void run() {
                 //noinspection InfiniteLoopStatement
                 while (true) {
                     try {
-                        Thread.sleep(period * 1000);
+                        Thread.sleep(1000);
                     } catch (InterruptedException ignored) {
 
                     }
