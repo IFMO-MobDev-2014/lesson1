@@ -1,4 +1,4 @@
-package ru.ifmo.md.lesson1;
+package pls.me.kill.whirl;
 
 import android.app.Activity;
 import android.os.Bundle;
