@@ -14,14 +14,14 @@ import java.util.Random;
 class WhirlView extends SurfaceView implements Runnable {
     private int[][][] field = null;
     private int[] bmpSrc = null;
-    private Bitmap bmp = null;
     private int z = 0;
     private final int width = 240;
     private final int height = 320;
-    private float scaleX = 4;
-    private float scaleY = 8;
+    private float scaleX;
+    private float scaleY;
     private final int MAX_COLOR = 10;
-    private final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    private final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00,
+            0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     private final SurfaceHolder holder;
     private Thread thread = null;
     private volatile boolean running = false;
@@ -53,27 +53,25 @@ class WhirlView extends SurfaceView implements Runnable {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
                 canvas = holder.lockCanvas();
-                updateField();
+                canvas.scale(scaleX, scaleY);
 
+                updateField();
                 draw(canvas);
+
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "" + (finishTime - startTime) / 1000000);
                 count++;
                 sum += (finishTime - startTime) / 1000000;
-                /*try {
-                    Thread.sleep(16);
-                } catch (InterruptedException ignore) {
-                }*/
             }
         }
-        Log.i("TIME", "Average circle: " + (sum / count) + "FPS: " + (count * 1000 / sum));
+        Log.i("TIME", "Average circle: " + (sum / count) + "Average FPS: " + (count * 1000 / sum));
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        scaleX = ((float)(w + width - 1)) / ((float)width);
-        scaleY = ((float)(h + height - 1)) / ((float)height);
+        scaleX = ((float) (w + width - 1)) / ((float) width);
+        scaleY = ((float) (h + height - 1)) / ((float) height);
         initField();
     }
 
@@ -116,25 +114,12 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     public void draw(Canvas canvas) {
-        /*for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                if (field[z][x][y] != field[1 - z][x][y]) {
-                    paint.setColor(palette[field[z][x][y]]);
-                    canvas.drawRect(x * scaleX, y * scaleY, (x + 1) * scaleX, (y + 1) * scaleY, paint);
-                }
-            }
-        }*/
-
-
         int count = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 bmpSrc[count++] = palette[field[z][y][x]];
             }
         }
-        //bmp = Bitmap.createBitmap(bmpSrc, width, height, Bitmap.Config.ARGB_8888);
-        canvas.scale(scaleX, scaleY);
         canvas.drawBitmap(bmpSrc, 0, width, 0, 0, width, height, false, null);
-
     }
 }
