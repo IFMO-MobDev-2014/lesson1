@@ -1,6 +1,5 @@
 package ru.ifmo.md.lesson1;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -27,7 +26,7 @@ class WhirlView extends SurfaceView implements Runnable {
     private int[][] tmpField = new int[width][height];
     private int[] pixels = new int[width * height];
 
-    private static final int MAX_COLORS = 15;
+    private static final int MAX_COLORS = 10;
     private int[] palette = null;
 
     private Paint paint = null;
@@ -39,12 +38,14 @@ class WhirlView extends SurfaceView implements Runnable {
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
+    private boolean fieldStabilized = false;
 
     public WhirlView(Context context) {
         super(context);
         holder = getHolder();
         initField();
         initPalette();
+        fieldStabilized = false;
     }
 
     public void resume() {
@@ -60,14 +61,13 @@ class WhirlView extends SurfaceView implements Runnable {
         } catch (InterruptedException ignore) {}
     }
 
-    @SuppressLint("WrongCall")
     public void run() {
         while (running) {
-            updateField();
-            recalcFps();
             if (holder.getSurface().isValid()) {
+                updateField();
+                recalcFps();
                 Canvas canvas = holder.lockCanvas();
-                onDraw(canvas);
+                draw(canvas);
                 holder.unlockCanvasAndPost(canvas);
             }
         }
@@ -82,7 +82,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void initPalette() {
         palette = new int[MAX_COLORS];
-        float f1 = 0.4f, f2 = 0.3f, f3 = 0.3f;
+        float f1 = 1.4f, f2 = 1.4f, f3 = 1.4f;
         int p1 = 0, p2 = 2, p3 = 4;
         int w = 128, center = 127;
         for (int i = 0; i < MAX_COLORS; i++) {
@@ -98,40 +98,62 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void initField() {
-        Random rand = new Random(3124325);
+        Random rand = new Random();
+        int last = -1;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                field[x][y] = rand.nextInt(MAX_COLORS);
+                int color = rand.nextInt(MAX_COLORS);
+                while (color == last) {
+                    color = rand.nextInt(MAX_COLORS);
+                }
+                field[x][y] = last = color;
             }
         }
     }
 
     void updateField() {
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                tmpField[x][y] = field[x][y];
-                changed:
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dy = -1; dy <= 1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2 < 0) x2 += width;
-                        if (y2 < 0) y2 += height;
-                        if (x2 >= width) x2 -= width;
-                        if (y2 >= height) y2 -= height;
-                        int color = field[x][y] + 1;
-                        if (color == MAX_COLORS) color = 0;
-                        if (color == field[x2][y2]) {
-                            tmpField[x][y] = field[x2][y2];
-                            break changed;
+        int updatedCells = 0;
+        if (!fieldStabilized) {
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    tmpField[x][y] = field[x][y];
+                    changed:
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dy = -1; dy <= 1; dy++) {
+                            int x2 = x + dx;
+                            int y2 = y + dy;
+                            if (x2 < 0) x2 += width;
+                            if (y2 < 0) y2 += height;
+                            if (x2 >= width) x2 -= width;
+                            if (y2 >= height) y2 -= height;
+                            int color = field[x][y] + 1;
+                            if (color == MAX_COLORS) color = 0;
+                            if (color == field[x2][y2]) {
+                                tmpField[x][y] = field[x2][y2];
+                                updatedCells++;
+                                break changed;
+                            }
                         }
                     }
                 }
             }
+            int[][] tmp = field;
+            field = tmpField;
+            tmpField = tmp;
+        } else {
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    field[x][y]++;
+                    if (field[x][y] == MAX_COLORS) {
+                        field[x][y] = 0;
+                    }
+                }
+            }
         }
-        int[][] tmp = field;
-        field = tmpField;
-        tmpField = tmp;
+        if (!fieldStabilized && updatedCells == width * height) {
+            fieldStabilized = true;
+            Log.d(TAG, "field stabilized");
+        }
         int cnt = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -153,7 +175,7 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     @Override
-    public void onDraw(Canvas canvas) {
+    public void draw(Canvas canvas) {
         canvas.scale(scaleWidth, scaleHeight);
         canvas.drawBitmap(pixels, 0, width, 0, 0, width, height, false, null);
         canvas.drawText("FPS: " + String.format("%.1f", fps), 10, 25, paint);
