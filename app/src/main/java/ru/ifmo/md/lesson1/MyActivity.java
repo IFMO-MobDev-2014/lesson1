@@ -14,18 +14,19 @@ public class MyActivity extends Activity {
         super.onCreate(savedInstanceState);
         whirlView = new WhirlView(this);
         setContentView(whirlView);
+        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+        //        WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
     }
-    /*
+
     @Override
     public void onResume() {
         super.onResume();
-    //    whirlView.resume();
+        whirlView.resume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-    //    whirlView.pause();
+        whirlView.pause();
     }
-    */
 }
