@@ -56,14 +56,12 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     public void resume() {
-//        Log.i("id", "resume");
         running = true;
         thread = new Thread(this);
         thread.start();
     }
 
     public void pause() {
-//        Log.i("id", "pause");
         running = false;
         try {
             thread.join();
@@ -88,9 +86,7 @@ class WhirlView extends SurfaceView implements Runnable {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
 
-                //initial state
                 long hash;
-                //
                 while (!flag) {
                     hash = getHash();
                     setUpPixels();
@@ -121,8 +117,6 @@ class WhirlView extends SurfaceView implements Runnable {
                     updateField();
                 }
 
-
-//                Log.i("LOL", "-----------");
                 bitmap = forLinks[it];
                 it = (it + 1) % forLinks.length;
                 canvas = holder.lockCanvas();
