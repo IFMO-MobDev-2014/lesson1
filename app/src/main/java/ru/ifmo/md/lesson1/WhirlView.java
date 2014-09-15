@@ -76,7 +76,7 @@ class WhirlView extends SurfaceView implements Runnable {
         field = new int[width][height];
         field2 = new int[width][height];
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
+        for (int x=0; x< width; x++) {
             for (int y=0; y<height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
             }
