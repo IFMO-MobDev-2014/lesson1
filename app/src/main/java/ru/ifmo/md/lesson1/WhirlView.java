@@ -5,8 +5,6 @@ import android.graphics.*;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
-import java.io.Console;
 import java.util.Random;
 
 /**
@@ -61,10 +59,8 @@ class WhirlView extends SurfaceView implements Runnable {
                 try {
                     for (Thread thread : threads) thread.join();
                 } catch (InterruptedException e) {
-//                    Thread.sleep(100);
                     e.printStackTrace();
                 }
-                //
                 updateField();
                 dumpBitmap();
                 onDraw(canvas);
@@ -81,8 +77,6 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-//        width = w / scale;
-//        height = h / scale;
         rect = new Rect(0, 0, w, h);
         canvas = new Canvas(bitmap);
         tempFieldE = new int[2 * width + 2 * height - 4];
@@ -104,11 +98,11 @@ class WhirlView extends SurfaceView implements Runnable {
     void initThreads() {
         threads = new Thread[STRIPE_THREADS_NUMBER + 1];
         threads[0] = new Thread(new EdgeDrawer(), "Edger");
-        for (int i = 0; i < STRIPE_THREADS_NUMBER; i++) threads[i + 1] = new Thread(new StripeDrawer(i), "Striper #" + (i+1));
-//        for (int i = 0; i < STRIPE_THREADS_NUMBER; i++) threads[i + 1] = new Thread (new StripeDrawer(STRIPE_THREADS_NUMBER - 1 - i), "Striper #" + (i+1));
+        for (int i = 0; i < STRIPE_THREADS_NUMBER; i++)
+            threads[i + 1] = new Thread(new StripeDrawer(i), "Striper #" + (i + 1));
     }
 
-        // TODO Construnt field out of tempfields
+    // TODO Construnt field out of tempfields
     void updateField() {
         for (int i = 0; i < width; i++) {
             field[i][0] = tempFieldE[i];
@@ -130,8 +124,9 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     int[][] dumper = new int[width][height];
-    void dumpBitmap(){
-        for (int i = 0; i < width; i++){
+
+    void dumpBitmap() {
+        for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 dumper[i][j] = bitmap.getPixel(i, j);
             }
@@ -151,40 +146,48 @@ class WhirlView extends SurfaceView implements Runnable {
 
         // (a,b) base, (c,d) new, f place in tempFieldE
         void validate(int a, int b, int c, int d, int f) {
-            if ((field[a][b] + 1) % MAX_COLOR == field[c][d]) { tempFieldE[f] = field[c][d]; }
+            if ((field[a][b] + 1) % MAX_COLOR == field[c][d]) {
+                tempFieldE[f] = field[c][d];
+            }
         }
 
         @Override
         public void run() {
             // corners
-            for (int a : adjacent1x){
-                for (int b: adjacent1y) { validate(0, 0, a, b, 0); }
-                for (int b: adjacent2y) { validate(0, height - 1, a, b, width + (height - 2) * 2); }
+            for (int a : adjacent1x) {
+                for (int b : adjacent1y) {
+                    validate(0, 0, a, b, 0);
+                }
+                for (int b : adjacent2y) {
+                    validate(0, height - 1, a, b, width + (height - 2) * 2);
+                }
             }
-            for (int a : adjacent2x){
-                for (int b: adjacent1y) { validate(width - 1, 0, a, b, width - 1); }
-                for (int b: adjacent2y) {
+            for (int a : adjacent2x) {
+                for (int b : adjacent1y) {
+                    validate(width - 1, 0, a, b, width - 1);
+                }
+                for (int b : adjacent2y) {
                     validate(width - 1, height - 1, a, b, 2 * width + 2 * height - 5);
                 }
             }
             // horizontal lines
             for (int i = 1; i < width - 1; i++) {
-                for (int a : new int[]{i - 1, i, i + 1}){
-                    for (int b : adjacent1y){ // upper row
+                for (int a : new int[]{i - 1, i, i + 1}) {
+                    for (int b : adjacent1y) { // upper row
                         validate(i, 0, a, b, i);
                     }
-                    for (int b : adjacent2y){ // lower row
+                    for (int b : adjacent2y) { // lower row
                         validate(i, height - 1, a, b, width + (height - 2) * 2 + i);
                     }
                 }
             }
             // vertical lines
             for (int i = 1; i < height - 1; i++) {
-                for (int b : new int[]{i - 1, i, i + 1}){
-                    for (int a : adjacent1x){ // left column
+                for (int b : new int[]{i - 1, i, i + 1}) {
+                    for (int a : adjacent1x) { // left column
                         validate(0, i, a, b, width + i - 1);
                     }
-                    for (int a : adjacent2x){ // right column
+                    for (int a : adjacent2x) { // right column
                         validate(width - 1, i, a, b, width + (height - 2) + i - 1);
                     }
                 }
