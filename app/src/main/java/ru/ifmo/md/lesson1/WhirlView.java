@@ -10,8 +10,8 @@ import java.util.Random;
 
 class WhirlView extends SurfaceView implements Runnable {
     Canvas canvas;
-    int width = 320;
-    int height = 240;
+    int width = 240;
+    int height = 320;
     int [][] field = new int[width][height];
     int [][] field2 = new int[width][height];
     int [][] buf = new int[width][height];
@@ -52,14 +52,15 @@ class WhirlView extends SurfaceView implements Runnable {
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                Log.i("FPS", "Circle: " + 1000.0 / (float)((finishTime - startTime) / 1000000));
             }
         }
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        xScale = w / width;
-        yScale = h / height;
+        xScale = ((float) w) / width;
+        yScale = ((float) h) / height;
         initField();
     }
 
