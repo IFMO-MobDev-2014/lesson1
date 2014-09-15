@@ -20,7 +20,7 @@ public class FieldDrawer extends Thread {
     Bitmap animation[];
 
     public FieldDrawer(int width, int height) {
-        setPriority(MAX_PRIORITY - 1);
+        setPriority(MAX_PRIORITY);
         this.updater = new FieldUpdater(width, height);
         updater.setPriority(MAX_PRIORITY);
         this.finder = new ConsequenceFinder(this);
