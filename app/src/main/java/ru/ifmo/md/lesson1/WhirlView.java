@@ -2,7 +2,6 @@ package ru.ifmo.md.lesson1;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -13,14 +12,14 @@ import java.util.Random;
 * Created by thevery on 11/09/14.
 */
 class WhirlView extends SurfaceView implements Runnable {
-
-    Paint paint = new Paint();
     int [][] field = null;
     int [][] field2 = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
-    final int MAX_COLOR = 10;
+    int [] colors = null;
+    int width = 240;
+    int height = 320;
+    float scale_W = 1;
+    float scale_H = 1;
+    static final int MAX_COLOR = 10;
     int[] palette = {0xFFFFE4C4, 0xFFFFF0F5, 0xFF6495ED, 0xFFAFEEEE, 0xFF20B2AA, 0xFFADFF2F, 0xFFFFD700, 0xFFCD5C5C, 0xFFFF69B4, 0xFF8A2BE2};
     SurfaceHolder holder;
     Thread thread = null;
@@ -48,10 +47,10 @@ class WhirlView extends SurfaceView implements Runnable {
         while (running) {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
-                Canvas canvas = holder.lockCanvas(); // takes 2
-                updateField();                       // takes 14
-                onDraw(canvas);                      // takes 24
-                holder.unlockCanvasAndPost(canvas);  // takes 40
+                Canvas canvas = holder.lockCanvas();
+                updateField();
+                onDraw(canvas);
+                holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
                 try {
@@ -63,14 +62,19 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        /*width = w/scale;
+        height = h/scale;*/
+        scale_H = (float) w/width;
+        scale_W = (float) h/height;
+        Log.i("TIME", "Circle: " + scale_W);
+        Log.i("TIME", "Circle: " + scale_H);
         initField();
     }
 
     void initField() {
         field = new int[width][height];
         field2 = new int[width][height];
+        colors = new int[width*height];
         Random rand = new Random();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
@@ -98,6 +102,7 @@ class WhirlView extends SurfaceView implements Runnable {
                         }
                     }
                 }
+                colors[x + y * width] = palette[field2[x][y]];
             }
         }
         for (int x=0; x<width; x++) {
@@ -107,11 +112,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
-            }
-        }
+        canvas.scale(scale_H,scale_W);
+        canvas.drawBitmap(colors,0,width,0,0,width,height,false,null);
     }
 }
