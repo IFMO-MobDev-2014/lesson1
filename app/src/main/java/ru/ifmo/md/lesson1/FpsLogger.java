@@ -30,6 +30,6 @@ class FpsLogger {
     }
 
     public synchronized void update() {
-        ++count;
+        count++;
     }
 }
