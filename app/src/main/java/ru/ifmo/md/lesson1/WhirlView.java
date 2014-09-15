@@ -13,10 +13,10 @@ import android.view.SurfaceView;
 import java.util.Random;
 
 class WhirlView extends SurfaceView implements Runnable {
-    int [][][] field = null;
+    int [][] field = null;
     int step = 0;
-    int width = 240;
-    int height = 320;
+    final int WIDTH = 240;
+    final int HEIGHT = 320;
     int countframes = 0;
     double fps, afps;
     long ptime;
@@ -27,7 +27,8 @@ class WhirlView extends SurfaceView implements Runnable {
     Canvas canvas;
     Rect screen;
     Paint paint = new Paint();
-    Bitmap bmap = Bitmap.createBitmap(width,height, Bitmap.Config.RGB_565);
+    Bitmap bmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.RGB_565);
+
     volatile boolean running = false;
 
     public WhirlView(Context context) {
@@ -54,10 +55,10 @@ class WhirlView extends SurfaceView implements Runnable {
                 canvas = holder.lockCanvas();
                 ptime = System.currentTimeMillis();
                 updateField();
-                canvas.drawBitmap(bmap,null,screen, paint);
+                canvas.drawBitmap(bmap, null, screen, paint);
 
 
-                canvas.drawText("FPS:" + String.valueOf(Math.round(fps * 10)/ 10.0) + "Average: " + String.valueOf(Math.round(fps * 10) / 10.0) , 60,60,paint );
+                canvas.drawText("FPS:" + String.valueOf(Math.round(fps * 10) / 10.0) + "Average: " + String.valueOf(Math.round(fps * 10) / 10.0), 60, 60, paint);
 
                 holder.unlockCanvasAndPost(canvas);
 
@@ -82,11 +83,11 @@ class WhirlView extends SurfaceView implements Runnable {
     void initField() {
         paint.setTextSize(50f);
         paint.setColor(0xFFFFFFFF);
-        field = new int[width][height][2];
+        field = new int[3][WIDTH * HEIGHT];
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                field[x][y][step] = rand.nextInt(MAX_COLOR);
+        for (int x=0; x< WIDTH; x++) {
+            for (int y=0; y< HEIGHT; y++) {
+                field[step][x + y * WIDTH] = rand.nextInt(MAX_COLOR);
             }
         }
     }
@@ -95,24 +96,26 @@ class WhirlView extends SurfaceView implements Runnable {
         int nstep = (step + 1) % 2;
         int x2;
         int y2;
-        for (int y=0; y<height; y++) {
-            for (int x=0; x<width; x++) {
+        for (int x=0; x< WIDTH; x++) {
+             for (int y=0; y< HEIGHT; y++) {
 
-                field[x][y][nstep] = field[x][y][step];
+                field[nstep][x + y * WIDTH] = field[step][x + y * WIDTH];
                 boolean loop = true;
                 for (int dx=-1; dx<=1 && loop; dx++) {
                     for (int dy=-1; dy<=1 && loop; dy++) {
-                        x2 = (width + x + dx) % width;
-                        y2 = (height + y + dy) % height;
-                        if ( (field[x][y][step]+1) % MAX_COLOR == field[x2][y2][step]) {
-                            field[x][y][nstep] = field[x2][y2][step];
+                        x2 = (WIDTH + x + dx) % WIDTH;
+                        y2 = (HEIGHT + y + dy) % HEIGHT;
+                        if ( (field[step][x + y * WIDTH]+1) % MAX_COLOR == field[step][x2 + y2 * WIDTH]) {
+                            field[nstep][x + y * WIDTH] = field[step][x2 + y2 * WIDTH];
+                            field[2][x + y * WIDTH] = palette[field[step][x2 + y2 * WIDTH]];
                             loop = false;
                         }
                     }
                 }
-                bmap.setPixel(x,y,palette[field[x][y][nstep]]);
+
             }
         }
+        bmap.setPixels(field[2], 0, WIDTH,0,0, WIDTH, HEIGHT);
         step = nstep;
 
     }
