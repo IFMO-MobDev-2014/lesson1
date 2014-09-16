@@ -15,9 +15,9 @@ import java.util.Random;
 // TODO Bitmap
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
+    int width = 240;
+    int height = 320;
+//    int scale = 4;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
 //    int[] palette2 = {0xFFFF00, 0xFF8000, 0xFF8080, 0xFF0080, 0xFF00FF, 0xFF0080, 0xFF0000, 0xFF8000, 0xFF80FF, 0xFFFFFF};
@@ -66,8 +66,8 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+//        width = w/scale;
+//        height = h/scale;
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         rect = new Rect(0, 0, w, h);
         canvas = new Canvas(bitmap);
