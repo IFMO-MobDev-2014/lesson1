@@ -63,7 +63,6 @@ class WhirlView extends SurfaceView implements Runnable {
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         rect = new Rect(0, 0, w, h);
-        canvas = new Canvas(bitmap);
         initField();
     }
 
