@@ -11,22 +11,17 @@ import java.util.Random;
 /**
 * Created by thevery on 11/09/14.
 */
-// TODO Parallel it
-// TODO Bitmap
+
 class WhirlView extends SurfaceView implements Runnable {
     volatile int[][] field = null;
-    int[] tempFieldE = null;
-    int[][][] tempFieldS = null;
     final int width = 240;
     final int height = 380;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
-//    int[] palette2 = {0xFFFF00, 0xFF8000, 0xFF8080, 0xFF0080, 0xFF00FF, 0xFF0080, 0xFF0000, 0xFF8000, 0xFF80FF, 0xFFFFFF};
-//    Paint paint = new Paint();
     SurfaceHolder holder;
     Thread thread = null;
     Canvas canvas;
-    Bitmap bitmap;
+    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
     Rect rect;
     volatile boolean running = false;
 
@@ -113,11 +108,5 @@ class WhirlView extends SurfaceView implements Runnable {
             }
         }
         canvas.drawBitmap(bitmap, null, rect, null);
-//        for (int x=0; x<width; x++) {
-//            for (int y=0; y<height; y++) {
-//                paint.setColor(palette[field[x][y]]);
-//                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
-//            }
-//        }
     }
 }
