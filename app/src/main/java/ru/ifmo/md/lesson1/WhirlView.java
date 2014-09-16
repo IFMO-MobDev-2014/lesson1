@@ -16,6 +16,7 @@ import java.util.Random;
  */
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
+    int [][] field2 = null;
     int width = 240;
     int height = 320;
     int scale = 4;
@@ -24,8 +25,8 @@ class WhirlView extends SurfaceView implements Runnable {
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
-    Bitmap screen = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-    int [][] field2 = null;
+    Bitmap screen = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+
     Rect my_area;
 
     public WhirlView(Context context) {
@@ -55,7 +56,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 draw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                Log.i("FPS", "Circle: " + (int) (1000/ ((finishTime - startTime) / 1000000)));
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {}
@@ -87,21 +88,21 @@ class WhirlView extends SurfaceView implements Runnable {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
 
-                field2[x][y] = field[x][y];
-
                 for (int dx=-1; dx<=1; dx++) {
                     for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
+                        int x2 = (x + dx + width) % width;
+                        int y2 = (y + dy + height) % height;
+                        /*if (x2<0) x2 += width;
                         if (y2<0) y2 += height;
                         if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
+                        if (y2>=height) y2 -= height;*/
+
                         if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
                         }
                     }
                 }
+                screen.setPixel(x, y, palette[field2[x][y]]);
             }
         }
         field = field2;
@@ -109,11 +110,11 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void draw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
+        /*for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
                 screen.setPixel(x, y, palette[field[x][y]]);
             }
-        }
+        }*/
         canvas.drawBitmap(Bitmap.createScaledBitmap(screen, canvas.getWidth(), canvas.getHeight(), false), null, my_area, null);
     }
 }
