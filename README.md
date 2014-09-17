@@ -31,5 +31,5 @@ http://en.wikipedia.org/wiki/Cyclic_cellular_automaton
 
 Оценки:
 =======
-TBD
+http://bit.ly/ifmo-md-14-results
 
