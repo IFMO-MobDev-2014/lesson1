@@ -30,7 +30,7 @@ class WhirlView extends SurfaceView implements Runnable {
     private int[] tempFieldE = null;
     private int[][][] tempFieldS = null;
 
-    private final int MAX_COLOR = 10;
+    private final int MAX_COLOR = 20;
     private int[] palette;
     private int cyclingConst = MAX_COLOR * MAX_COLOR;
 
