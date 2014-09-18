@@ -9,46 +9,61 @@ import android.view.SurfaceView;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.concurrent.*;
 
 /**
  * Created by thevery on 11/09/14.
  */
 
-// NOTE It can lose in performance because of shared field
-// TODO field must consist of real colours, operations should use special successor
+// TODO While main thread is parking in run(), it`s a bit slow.
+// (But synchronization is painful)
+
 class WhirlView extends SurfaceView implements Runnable {
-    final int width = 240;
-    final int height = 380;
+    private final int width = 240;
+    private final int height = 382;
 
+    private float k1;
+    private float k2;
     // volatile?
-    int[][] field = new int[width][height];
-    int[] paintedField = new int[width * height];
-    int[] tempFieldE = null;
-    int[][][] tempFieldS = null;
+    private int[][] field;
+    private int[] paintedField = new int[width * height];
+    private int[] tempFieldE = null;
+    private int[][][] tempFieldS = null;
 
-    final int MAX_COLOR = 10;
-    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    private final int MAX_COLOR = 10;
+    private int[] palette;
+    private int cyclingConst = MAX_COLOR * MAX_COLOR;
 
-    final int STRIPE_THREADS_NUMBER = 3;  //FIXME (height - 2) % STRIPE_THREADS_NUMBER must be 0
-    int delta = (height - 2) / STRIPE_THREADS_NUMBER;
-    Thread mainThread = null;
-    Thread[] threads = null;
+    final int STRIPE_THREADS_NUMBER = 4;  //FIXME (height - 2) % STRIPE_THREADS_NUMBER must be 0
+    private int delta = (height - 2) / STRIPE_THREADS_NUMBER;
+    private Thread mainThread = null;
+    private Runnable[] joiners = new Runnable[STRIPE_THREADS_NUMBER];
+    private Runnable[] counters = new Runnable[STRIPE_THREADS_NUMBER + 1];
+    private ExecutorService executor = Executors.newFixedThreadPool(STRIPE_THREADS_NUMBER * 2 + 1);
+    private Future[] futures = new Future[STRIPE_THREADS_NUMBER * 2 + 1];
 
-    SurfaceHolder holder;
+    Random rand = new Random();
+    private SurfaceHolder holder;
     Canvas canvas;
-    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-    Rect rect;
 
     volatile boolean running = false;
 
     @SuppressWarnings("FieldCanBeLocal")
     private final boolean cycling = true;
-    LinkedList<int[]> fieldCache = new LinkedList<int[]>();
+    private LinkedList<int[]> fieldCache = new LinkedList<int[]>();
 
 
     public WhirlView(Context context) {
         super(context);
         holder = getHolder();
+
+    }
+
+    private void initPalette() {
+        palette = new int[MAX_COLOR];
+        for (int i = 0; i < MAX_COLOR; i++) {
+            palette[i] = rand.nextInt(Integer.MAX_VALUE);
+        }
     }
 
     public void resume() {
@@ -65,8 +80,8 @@ class WhirlView extends SurfaceView implements Runnable {
         }
     }
 
-
     public void run() {
+        initPalette();
         int cycles = 0;
         boolean looped = false;
         while (running) {
@@ -74,7 +89,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 canvas = holder.lockCanvas();
                 long startTime = System.nanoTime();
                 //noinspection ConstantConditions,PointlessBooleanExpression
-                if (cycling && cycles > 70){ // +- magic constant
+                if (cycling && cycles > cyclingConst) { // +- magic constant
                     if (!looped) {
                         calculate();
                         if (!fieldCache.isEmpty() && Arrays.equals(fieldCache.getFirst(), paintedField)) {
@@ -85,60 +100,70 @@ class WhirlView extends SurfaceView implements Runnable {
                         }
                     } else {
                         paintedField = fieldCache.removeFirst();
-                        bitmap.setPixels(paintedField, 0, width, 0, 0, width, height);
+//                        bitmap.setPixels(paintedField, 0, width, 0, 0, width, height);
                         fieldCache.addLast(paintedField);
+                        onDraw(canvas);
                     }
                 } else {
                     cycles++;
                     calculate();
                 }
-                onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle/FPS: " + (finishTime - startTime) / 1000000 + "/" + Math.round(1000000000.0 / ((double) (finishTime - startTime))));
-                try {
-                    Thread.sleep(16);
-                } catch (InterruptedException ignore) {
-                }
             }
         }
     }
 
     private void calculate() {
-        for (Thread thread : threads) thread.run();
-        try {
-            for (Thread thread : threads) thread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        for (int i = 1; i < STRIPE_THREADS_NUMBER + 1; i++) {
+            futures[i] = executor.submit(counters[i]);
+        }
+        onDraw(canvas);
+        counters[0].run();
+        for (int i = 1; i < STRIPE_THREADS_NUMBER + 1; i++) {
+            try {
+                futures[i].get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
         }
         updateField();
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        rect = new Rect(0, 0, w, h);
-        tempFieldE = new int[2 * width + 2 * height - 4];
-        tempFieldS = new int[STRIPE_THREADS_NUMBER][width - 2][delta];
-        initField();
+        k1 = (float) w / width;
+        k2 = (float) h / height;
+        initFields();
         initThreads();
     }
 
-    void initField() {
-        Random rand = new Random();
+    void initFields() {
+        field = new int[width][height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
             }
         }
+        tempFieldE = new int[2 * width + 2 * height - 4];
+        tempFieldS = new int[STRIPE_THREADS_NUMBER][width - 2][delta];
     }
 
     void initThreads() {
-        threads = new Thread[STRIPE_THREADS_NUMBER + 1];
-        threads[0] = new Thread(new EdgeDrawer(), "Edger");
-        for (int i = 0; i < STRIPE_THREADS_NUMBER; i++) threads[i + 1] = new Thread(new StripeDrawer(i), "Striper #" + (i+1));
+        counters[0] = new EdgeDrawer();
+        for (int i = 0; i < STRIPE_THREADS_NUMBER; i++) {
+            counters[i + 1] = new StripeDrawer(i);
+            joiners[i] = new Joiner(i);
+        }
     }
 
     void updateField() {
+        for (int i = 0; i < STRIPE_THREADS_NUMBER; i++) {
+            futures[i + 1 + STRIPE_THREADS_NUMBER] = executor.submit(joiners[i]);
+        }
         for (int i = 0; i < width; i++) {
             field[i][0] = tempFieldE[i];
             field[i][height - 1] = tempFieldE[width + 2 * (height - 2) + i];
@@ -147,22 +172,40 @@ class WhirlView extends SurfaceView implements Runnable {
             field[0][i] = tempFieldE[width + i - 1];
             field[width - 1][i] = tempFieldE[width + (height - 2) + i - 1];
         }
-        for (int num = 0; num < STRIPE_THREADS_NUMBER; num++) {
-            for (int x = 1; x < width - 1; x++) {
-                System.arraycopy(tempFieldS[num][x - 1], 0, field[x], 1 + num * delta, delta);
+        for (int i = STRIPE_THREADS_NUMBER + 1; i < 2 * STRIPE_THREADS_NUMBER + 1; i++)
+            try {
+                futures[i].get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
-        }
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 paintedField[i + width * j] = palette[field[i][j]];
             }
         }
-        bitmap.setPixels(paintedField, 0, width, 0, 0, width, height);
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        canvas.drawBitmap(bitmap, null, rect, null);
+        canvas.scale(k1, k2);
+        canvas.drawBitmap(paintedField, 0, width, 0, 0, width, height, true, null);
+    }
+
+    private class Joiner implements Runnable {
+        private final int num;
+
+        private Joiner(int num) {
+            this.num = num;
+        }
+
+        @Override
+        public void run() {
+            for (int x = 1; x < width - 1; x++) {
+                System.arraycopy(tempFieldS[num][x - 1], 0, field[x], 1 + num * delta, delta);
+            }
+        }
     }
 
     private class EdgeDrawer implements Runnable {
@@ -171,43 +214,60 @@ class WhirlView extends SurfaceView implements Runnable {
         int[] adjacent1y = new int[]{height - 1, 0, 1};
         int[] adjacent2y = new int[]{height - 2, height - 1, 0};
 
-        // (a,b) base, (c,d) new, f place in tempFieldE
-        void validate(int a, int b, int c, int d, int f) {
-            if ((field[a][b] + 1) % MAX_COLOR == field[c][d]) { tempFieldE[f] = field[c][d]; }
-        }
-
         @Override
         public void run() {
             // corners
-            for (int a : adjacent1x){
-                for (int b: adjacent1y) { validate(0, 0, a, b, 0); }
-                for (int b: adjacent2y) { validate(0, height - 1, a, b, width + (height - 2) * 2); }
+            for (int a : adjacent1x) {
+                for (int b : adjacent1y) {
+                    if ((field[0][0] + 1) % MAX_COLOR == field[a][b]) {
+                        tempFieldE[0] = field[a][b];
+                    }
+                }
+                for (int b : adjacent2y) {
+                    if ((field[0][height - 1] + 1) % MAX_COLOR == field[a][b]) {
+                        tempFieldE[width + (height - 2) * 2] = field[a][b];
+                    }
+                }
             }
-            for (int a : adjacent2x){
-                for (int b: adjacent1y) { validate(width - 1, 0, a, b, width - 1); }
-                for (int b: adjacent2y) {
-                    validate(width - 1, height - 1, a, b, 2 * width + 2 * height - 5);
+            for (int a : adjacent2x) {
+                for (int b : adjacent1y) {
+                    if ((field[width - 1][0] + 1) % MAX_COLOR == field[a][b]) {
+                        tempFieldE[width - 1] = field[a][b];
+                    }
+                }
+                for (int b : adjacent2y) {
+                    if ((field[width - 1][height - 1] + 1) % MAX_COLOR == field[a][b]) {
+                        tempFieldE[2 * width + 2 * height - 5] = field[a][b];
+                    }
                 }
             }
             // horizontal lines
             for (int i = 1; i < width - 1; i++) {
-                for (int a  = i - 1; a <= i + 1; a++){
-                    for (int b : adjacent1y){ // upper row
-                        validate(i, 0, a, b, i);
+                for (int a = i - 1; a <= i + 1; a++) {
+                    for (int b : adjacent1y) { // upper row
+                        if ((field[i][0] + 1) % MAX_COLOR == field[a][b]) {
+                            tempFieldE[i] = field[a][b];
+                        }
                     }
-                    for (int b : adjacent2y){ // lower row
-                        validate(i, height - 1, a, b, width + (height - 2) * 2 + i);
+                    for (int b : adjacent2y) { // lower row
+                        if ((field[i][height - 1] + 1) % MAX_COLOR == field[a][b]) {
+                            tempFieldE[width + (height - 2) * 2 + i] = field[a][b];
+                        }
                     }
                 }
             }
             // vertical lines
             for (int i = 1; i < height - 1; i++) {
                 for (int b = i - 1; b <= i + 1; b++) {
-                    for (int a : adjacent1x){ // left column
-                        validate(0, i, a, b, width + i - 1);
+                    for (int a : adjacent1x) { // left column
+                        if ((field[0][i] + 1) % MAX_COLOR == field[a][b]) {
+                            tempFieldE[width + i - 1] = field[a][b];
+                        }
                     }
-                    for (int a : adjacent2x){ // right column
-                        validate(width - 1, i, a, b, width + (height - 2) + i - 1);
+                    for (int a : adjacent2x) { // right column
+                        if ((field[width - 1][i] + 1) % MAX_COLOR == field[a][b]) {
+                            tempFieldE[width + (height - 2) + i - 1] = field[a][b];
+                        }
                     }
                 }
             }
@@ -229,7 +289,8 @@ class WhirlView extends SurfaceView implements Runnable {
                 for (int y = 0; y < delta; y++) {
                     temp2 = field[x + 1][y + shift];
                     tempFieldS[num][x][y] = temp2;
-                    der: for (int dx = -1; dx < 2; dx++) {
+                    der:
+                    for (int dx = -1; dx < 2; dx++) {
                         x2 = x + dx;
                         for (int dy = -1; dy < 2; dy++) {
                             y2 = y + dy;
