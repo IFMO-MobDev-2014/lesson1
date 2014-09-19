@@ -38,7 +38,7 @@ class WhirlView extends SurfaceView implements Runnable {
     public void pause() {
         running = false;
         try {
-            thread.join();ф
+            thread.join();
         } catch (InterruptedException ignore) {}
     }
 
@@ -106,8 +106,8 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onDraw(Canvas canvas) {
         Paint paint = new Paint();
         int k = 0;
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        for (int y=0; y<height; y++) {
+            for (int x=0; x<width; x++) {
                 bitmap[k++] = palette[field[x][y]];
                 //canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
             }
