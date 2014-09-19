@@ -14,8 +14,8 @@ import java.util.Random;
  */
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
-    int width = 0;
-    int height = 0;
+    int width = 240;
+    int height = 320;
     int scale = 3;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
@@ -52,7 +52,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                Log.i("TIME", "FPS: " + 1000 / ((finishTime - startTime) / 1000000));
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {}
