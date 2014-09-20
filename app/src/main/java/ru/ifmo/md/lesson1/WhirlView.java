@@ -13,18 +13,63 @@ import java.util.Random;
 /**
 * Created by thevery on 11/09/14.
 */
+
+class Update implements Runnable {
+    Update() {
+
+    }
+    public void run() {}
+}
+
+
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
     int width = 240;
     int height = 320;
     int w1 = 0, h1 = 0;
     int[] ps = null;
+    boolean flag = false;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
-    Thread thread = null;
+    Thread thread, thread1 = null;
     Bitmap bitmap, bitmap2 = null;
     volatile boolean running = false;
+
+    public class Update implements Runnable {
+        public void run() {
+            while (running) {
+                if (flag) continue;
+                int[][] field2 = new int[width][height];
+                for (int x = 0; x < width; x++) {
+                    for (int y = 0; y < height; y++) {
+                        field2[x][y] = field[x][y];
+                        int t = (field[x][y] + 1) % MAX_COLOR;
+                        for (int dx = -1; dx <= 1; dx++) {
+                            int x2 = x + dx;
+                            if (x2 < 0) x2 += width;
+                            else if (x2 >= width) x2 -= width;
+                            for (int dy = -1; dy <= 1; dy++) {
+                                int y2 = y + dy;
+                                if (y2 < 0) y2 += height;
+                                else if (y2 >= height) y2 -= height;
+                                if (t == field[x2][y2]) {
+                                    field2[x][y] = field[x2][y2];
+                                    dx = 2;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                field = field2;
+                try {
+                    Thread.sleep(16);
+                } catch(InterruptedException e) {}
+                flag = true;
+            }
+        }
+    }
 
     public WhirlView(Context context) {
         super(context);
@@ -32,9 +77,13 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     public void resume() {
+        initField();
         running = true;
         thread = new Thread(this);
+        thread1 = new Thread(new Update());
         thread.start();
+        thread1.start();
+
     }
 
     public void pause() {
@@ -49,7 +98,7 @@ class WhirlView extends SurfaceView implements Runnable {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
-                updateField();
+                //updateField();
                 MyonDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
@@ -85,10 +134,12 @@ class WhirlView extends SurfaceView implements Runnable {
             for (int y = 0; y < height; y++) {
                 field2[x][y] = field[x][y];
                 int t = (field[x][y] + 1) % MAX_COLOR;
+
                 for (int dx = -1; dx <= 1; dx++) {
                     int x2 = x + dx;
                     if (x2 < 0) x2 += width;
                     else if (x2 >= width) x2 -= width;
+
                     for (int dy = -1; dy <= 1; dy++) {
                         int y2 = y + dy;
                         if (y2 < 0) y2 += height;
@@ -115,5 +166,6 @@ class WhirlView extends SurfaceView implements Runnable {
         }
         bitmap.setPixels(ps, 0, width, 0,0, width , height);
         canvas.drawBitmap(bitmap2, 0, 0, null);
+        flag = false;
     } 
 }
