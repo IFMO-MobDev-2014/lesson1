@@ -13,18 +13,23 @@ import java.util.Random;
  * Created by thevery on 11/09/14.
  */
 class WhirlView extends SurfaceView implements Runnable {
-    int [][] field = null;
-    int[][] field2 = null;
+    int[] field = null;
+    int[] field2 = null;
+    int[] pixels = null;
     int width = 0;
     int height = 0;
-    static final int scale = 4;
-    static final int MAX_COLOR = 10;
-    int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    int state = 0;
+    int incx = 0;
+    int decx = 0;
+    int incy = 0;
+    int decy = 0;
+    public static final int scale = 4;
+    public static final int MAX_COLOR = 10;
+    public static final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
-    Thread thread = null;
-    Bitmap.Config conf = Bitmap.Config.RGB_565;
-    Bitmap scaled_bmp;
+    Thread thread;
     Bitmap bmp;
+    Canvas canvas;
     volatile boolean running = false;
 
     public WhirlView(Context context) {
@@ -42,77 +47,93 @@ class WhirlView extends SurfaceView implements Runnable {
         running = false;
         try {
             thread.join();
-        } catch (InterruptedException ignore) {}
+        } catch (InterruptedException ignore) {
+        }
     }
 
     public void run() {
         while (running) {
             if (holder.getSurface().isValid()) {
                 long startTime = System.nanoTime();
-                Canvas canvas = holder.lockCanvas();
+                canvas = holder.lockCanvas();
                 updateField();
-                onDraw(canvas);
+                draw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
                 try {
                     Thread.sleep(16);
-                } catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {
+                }
             }
         }
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
-        bmp = Bitmap.createBitmap(width, height, conf);
+        width = w / scale;
+        height = h / scale;
+
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
-        field2 = new int[width][height];
+        field = new int[width*height];
+        field2 = new int[width*height];
+        pixels = new int[width * height];
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                field[x][y] = rand.nextInt(MAX_COLOR);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                field[x+width*y] = rand.nextInt(MAX_COLOR);
             }
         }
     }
 
     void updateField() {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                field2[x][y] = field[x][y];
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
-                            field2[x][y] = field[x2][y2];
-                        }
-                    }
+        for (int x = 1; x < width-1; x++) {
+            for (int y = 1; y < height-1; y++) {
+                field2[x+width*y] = field[x+width*y];
+                pixels[x + width * y] = palette[field[x+width*y]];
+                state = (field[x+width*y]+1) % MAX_COLOR;
+                incx = (x<width) ? x+1 : 0;
+                decx = (x>=0) ? x-1 : width-1;
+                incy = (y<height) ? y+1 : 0;
+                decy = (y>=0) ? y-1 : height-1;
+                if (state == field[incx+width*y]) {
+                    field2[x+width*y] = field[incx+width*y];
+                    pixels[x + width * y] = palette[field[incx+width*y]];
+                } else if (state == field[incx+width*incy]) {
+                    field2[x+width*y] = field[incx+width*incy];
+                    pixels[x + width * y] = palette[field[incx+width*incy]];
+                } else if (state == field[incx+width*decy]) {
+                    field2[x+width*y] = field[incx+width*decy];
+                    pixels[x + width * y] = palette[field[incx+width*decy]];
+                } else if (state == field[decx+width*incy]) {
+                    field2[x+width*y] = field[decx+width*incy];
+                    pixels[x + width * y] = palette[field[decx+width*incy]];
+                } else if (state == field[decx+width*y]) {
+                    field2[x+width*y] = field[decx+width*y];
+                    pixels[x + width * y] = palette[field[decx+width*y]];
+                } else if (state == field[decx+width*decy]) {
+                    field2[x+width*y] = field[decx+width*decy];
+                    pixels[x + width * y] = palette[field[decx+width*decy]];
+                } else if (state == field[x+width*incy]) {
+                    field2[x+width*y] = field[x+width*incy];
+                    pixels[x + width * y] = palette[field[x+width*incy]];
+                } else if (state == field[x+width*decy]) {
+                    field2[x+width*y] = field[x+width*decy];
+                    pixels[x + width * y] = palette[field[x+width*decy]];
                 }
             }
         }
-        for (int x = 0; x < width; x++) {
-            System.arraycopy(field2[x], 0, field[x], 0 , height);
-        }
+
+        System.arraycopy(field2, 0, field, 0 ,width*height);
     }
 
     @Override
-    public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y = 0; y < height; y++) {
-                bmp.setPixel(x, y, palette[field[x][y]]);
-            }
-        }
-        scaled_bmp = Bitmap.createScaledBitmap(bmp, canvas.getWidth(), canvas.getHeight(), true);
-        canvas.drawBitmap(scaled_bmp, 0, 0, null);
+    public void draw(Canvas canvas) {
+        canvas.scale(scale, scale);
+        canvas.drawBitmap(pixels, 0, width, 0, 0, width, height, false, null);
     }
 }
+
