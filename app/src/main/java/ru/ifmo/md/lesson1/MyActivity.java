@@ -2,6 +2,7 @@ package ru.ifmo.md.lesson1;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.MotionEvent;
 
 
 public class MyActivity extends Activity {
