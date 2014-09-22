@@ -7,15 +7,22 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**
-* Created by thevery on 11/09/14.
-*/
+ * Created by thevery on 11/09/14.
+ */
+
+/**
+ * Optimized by siziyman on 13/09/14.
+ */
+
 class WhirlView extends SurfaceView implements Runnable {
+    Paint paint = new Paint(); // GOD BLESS ANDROID STUDIO HINTS
     int [][] field = null;
-    int width = 0;
-    int height = 0;
+    int width = 240;
+    int height = 320;
     int scale = 4;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
@@ -77,11 +84,9 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void updateField() {
         int[][] field2 = new int[width][height];
+        field2 = Arrays.copyOf(field, field.length);
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-
-                field2[x][y] = field[x][y];
-
                 for (int dx=-1; dx<=1; dx++) {
                     for (int dy=-1; dy<=1; dy++) {
                         int x2 = x + dx;
@@ -104,7 +109,6 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onDraw(Canvas canvas) {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
                 paint.setColor(palette[field[x][y]]);
                 canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
             }
