@@ -106,7 +106,7 @@ class WhirlView extends SurfaceView implements Runnable {
         for (int x=0; x<width; x++) {
             for (int y = 0; y<height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
-                colors[colorsCell++] = palette[field[x][y]];
+                colors[x + y*width] = palette[field[x][y]];
             }
         }
 
@@ -160,7 +160,7 @@ class WhirlView extends SurfaceView implements Runnable {
             for (int y=0; y<height; y++) {
                 updateCell(x, y);
 
-                colors[colorsCell++] = palette[field[x][y]];
+                colors[x + y*width] = palette[field[x][y]];
             }
         }
     }
