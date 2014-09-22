@@ -16,8 +16,8 @@ class WhirlView extends SurfaceView implements Runnable {
     int[] field = null;
     int[] field2 = null;
     int[] pixels = null;
-    int width = 0;
-    int height = 0;
+    int width = 240;
+    int height = 320;
     int state = 0;
     int incx = 0;
     int decx = 0;
@@ -72,8 +72,6 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w / scale;
-        height = h / scale;
         wScale = (float) w / width;
         hScale = (float) h / height;
         initField();
@@ -134,7 +132,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.scale(hScale, wScale);
+        canvas.scale(wScale, hScale);
         canvas.drawBitmap(pixels, 0, width, 0, 0, width, height, false, null);
     }
 }
