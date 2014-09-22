@@ -2,6 +2,7 @@ package ru.ifmo.md.lesson1;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.WindowManager;
 
 
 public class MyActivity extends Activity {
@@ -13,6 +14,8 @@ public class MyActivity extends Activity {
         super.onCreate(savedInstanceState);
         whirlView = new WhirlView(this);
         setContentView(whirlView);
+    //    getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+    //            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
     }
 
     @Override
