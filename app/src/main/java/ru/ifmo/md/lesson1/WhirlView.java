@@ -30,7 +30,6 @@ class WhirlView extends SurfaceView implements Runnable {
     public static final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
     Thread thread;
-    Bitmap bmp;
     Canvas canvas;
     volatile boolean running = false;
 
@@ -135,7 +134,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.scale(wScale, hScale);
+        canvas.scale(hScale, wScale);
         canvas.drawBitmap(pixels, 0, width, 0, 0, width, height, false, null);
     }
 }
