@@ -23,6 +23,8 @@ class WhirlView extends SurfaceView implements Runnable {
     int decx = 0;
     int incy = 0;
     int decy = 0;
+    float wScale = 0;
+    float hScale = 0;
     public static final int scale = 4;
     public static final int MAX_COLOR = 10;
     public static final int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
@@ -73,7 +75,8 @@ class WhirlView extends SurfaceView implements Runnable {
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
         width = w / scale;
         height = h / scale;
-
+        wScale = (float) w / width;
+        hScale = (float) h / height;
         initField();
     }
 
@@ -132,7 +135,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void draw(Canvas canvas) {
-        canvas.scale(scale, scale);
+        canvas.scale(wScale, hScale);
         canvas.drawBitmap(pixels, 0, width, 0, 0, width, height, false, null);
     }
 }
