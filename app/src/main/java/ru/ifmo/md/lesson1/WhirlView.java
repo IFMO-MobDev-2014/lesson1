@@ -14,6 +14,8 @@ import java.util.Random;
 */
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
+    int [][] field2 = null;
+    int [] elements = null;
     int width = 0;
     int height = 0;
     int scale = 4;
@@ -52,7 +54,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
                 try {
-                    Thread.sleep(16);
+                    Thread.sleep(1);
                 } catch (InterruptedException ignore) {}
             }
         }
@@ -67,6 +69,7 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void initField() {
         field = new int[width][height];
+        elements = new int [width*height];
         Random rand = new Random();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
@@ -76,16 +79,15 @@ class WhirlView extends SurfaceView implements Runnable {
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
+        int x2, y2;
+        field2 = new int[width][height];
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-
                 field2[x][y] = field[x][y];
-
                 for (int dx=-1; dx<=1; dx++) {
                     for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
+                        x2 = x + dx;
+                        y2 = y + dy;
                         if (x2<0) x2 += width;
                         if (y2<0) y2 += height;
                         if (x2>=width) x2 -= width;
@@ -102,12 +104,12 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
+        canvas.scale(scale, scale);
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+                elements[x+y*width] = palette[field[x][y]];
             }
         }
+        canvas.drawBitmap(elements, 0, width, 0, 0, width, height, false, null);
     }
 }
