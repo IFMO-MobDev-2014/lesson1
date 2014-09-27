@@ -10,17 +10,18 @@ import android.view.SurfaceView;
 import java.util.Random;
 
 /**
-* Created by thevery on 11/09/14.
-*/
+ * Created by thevery on 11/09/14.
+ */
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
+    int width = 240;
+    int height = 320;
+    int scale = 3;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     SurfaceHolder holder;
     Thread thread = null;
+    int[] bitmap;
     volatile boolean running = false;
 
     public WhirlView(Context context) {
@@ -44,13 +45,14 @@ class WhirlView extends SurfaceView implements Runnable {
     public void run() {
         while (running) {
             if (holder.getSurface().isValid()) {
+                bitmap = new int[width * height];
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                Log.i("TIME", "FPS: " + 1000 / ((finishTime - startTime) / 1000000));
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {}
@@ -102,12 +104,15 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+        Paint paint = new Paint();
+        int k = 0;
+        for (int y=0; y<height; y++) {
+            for (int x=0; x<width; x++) {
+                bitmap[k++] = palette[field[x][y]];
+                //canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
             }
         }
+        canvas.scale(3, 4);
+        canvas.drawBitmap(bitmap, 0, width, 0, 0, width, height, true, paint);
     }
 }
