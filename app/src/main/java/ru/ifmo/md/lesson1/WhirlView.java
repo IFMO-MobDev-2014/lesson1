@@ -120,7 +120,7 @@ class WhirlView extends SurfaceView implements Runnable {
         int[] imgData = new int[width * height];
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                //Отрисовка че даёт ~30%ый выигрышь в производительности
+                //Отрисовка всех пикселей сразу через массив даёт ~30%ый выигрышь в производительности
                 imgData[x + y * width] = palette[field[x][y]];
             }
         }
