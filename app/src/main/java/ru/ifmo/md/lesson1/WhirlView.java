@@ -12,10 +12,25 @@ import java.util.Random;
 /**
 * Created by thevery on 11/09/14.
 */
+import android.content.Context;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+
+import java.util.Random;
+
+/**
+ * Created by thevery on 11/09/14.
+ */
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
-    int width = 0;
-    int height = 0;
+    int width = 240;
+    int height = 320;
+    int scrW=240;
+    int scrH=320;
     int scale = 4;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
@@ -47,21 +62,21 @@ class WhirlView extends SurfaceView implements Runnable {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
+                long finishUpdateTime = System.nanoTime();
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
                 Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
-                try {
-                    Thread.sleep(16);
-                } catch (InterruptedException ignore) {}
+                Log.i("TIME", "Draw: " + (finishTime - finishUpdateTime) / 1000000);
+                Log.i("TIME", "Calc: " + (finishUpdateTime - startTime) / 1000000);
             }
         }
     }
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        scrW = w;
+        scrH = h;
         initField();
     }
 
@@ -102,12 +117,14 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
+        int[] imgData = new int[width * height];
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+                //Отрисовка че даёт ~30%ый выигрышь в производительности
+                imgData[x + y * width] = palette[field[x][y]];
             }
         }
+        canvas.scale((float)scrW / width, (float)scrH / height);
+        canvas.drawBitmap(imgData, 0, width, 0, 0, width, height, false, null);
     }
 }
