@@ -1,8 +1,9 @@
 package ru.ifmo.md.lesson1;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -10,15 +11,16 @@ import android.view.SurfaceView;
 import java.util.Random;
 
 /**
-* Created by thevery on 11/09/14.
-*/
+ * Created by thevery on 11/09/14.
+ */
 class WhirlView extends SurfaceView implements Runnable {
-    int [][] field = null;
-    int width = 0;
-    int height = 0;
-    int scale = 4;
+    Rect dst;
+    final int width = 240;
+    final int height = 320;
     final int MAX_COLOR = 10;
+    short[][] field = new short[width][height], field2 = new short[width][height];
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
+    Bitmap bMap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
@@ -47,10 +49,10 @@ class WhirlView extends SurfaceView implements Runnable {
                 long startTime = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 updateField();
-                onDraw(canvas);
+                draw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 long finishTime = System.nanoTime();
-                Log.i("TIME", "Circle: " + (finishTime - startTime) / 1000000);
+                Log.i("FPS", ": " + 1000000000.0 / (double)(finishTime - startTime));
                 try {
                     Thread.sleep(16);
                 } catch (InterruptedException ignore) {}
@@ -60,54 +62,205 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        dst = new Rect(0, 0, w, h);
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
         Random rand = new Random();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
-                field[x][y] = rand.nextInt(MAX_COLOR);
+                field[x][y] = (short) rand.nextInt(MAX_COLOR);
+                field2[x][y] = field[x][y];
             }
         }
     }
 
     void updateField() {
-        int[][] field2 = new int[width][height];
+        int x2, y2;
         for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+            x2 = x - 1;
+            if (x2==-1) x2 = width - 1;
+            y2 = height - 1;
+            if ((field[x][0]+1) % MAX_COLOR == field[x2][y2]) {
+                field2[x][0] = field[x2][y2];
+                bMap.setPixel(x, 0, palette[field2[x][0]]);
+                //continue;
+            }
 
-                field2[x][y] = field[x][y];
+            if ( (field[x][0]+1) % MAX_COLOR == field[x2][0]) {
+                field2[x][0] = field[x2][0];
+                bMap.setPixel(x, 0, palette[field2[x][0]]);
+                //continue;
+            }
 
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
-                            field2[x][y] = field[x2][y2];
-                        }
-                    }
+            y2 = 1;
+            if ( (field[x][0]+1) % MAX_COLOR == field[x2][y2]) {
+                field2[x][0] = field[x2][y2];
+                bMap.setPixel(x, 0, palette[field2[x][0]]);
+                //continue;
+            }
+
+            y2 = height - 1;
+            if ( (field[x][0]+1) % MAX_COLOR == field[x][y2]) {
+                field2[x][0] = field[x][y2];
+                bMap.setPixel(x, 0, palette[field2[x][0]]);
+                //continue;
+            }
+
+            y2 = 1;
+            if ( (field[x][0]+1) % MAX_COLOR == field[x][y2]) {
+                field2[x][0] = field[x][y2];
+                bMap.setPixel(x, 0, palette[field2[x][0]]);
+                //continue;
+            }
+
+            x2 = x + 1;
+            y2 = height - 1;
+            if (x2==width) x2 = 0;
+            if ( (field[x][0]+1) % MAX_COLOR == field[x2][y2]) {
+                field2[x][0] = field[x2][y2];
+                bMap.setPixel(x, 0, palette[field2[x][0]]);
+                //continue;
+            }
+
+            if ( (field[x][0]+1) % MAX_COLOR == field[x2][0]) {
+                field2[x][0] = field[x2][0];
+                bMap.setPixel(x, 0, palette[field2[x][0]]);
+                //continue;
+            }
+
+            y2 = 1;
+            if ( (field[x][0]+1) % MAX_COLOR == field[x2][y2]) {
+                field2[x][0] = field[x2][y2];
+                bMap.setPixel(x, 0, palette[field2[x][0]]);
+            }
+            for (int y=1; y<height-1; y++) {
+                x2 = x - 1;
+                y2 = y - 1;
+                if (x2<0) x2 = width - 1;
+                if ((field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
+                    field2[x][y] = field[x2][y2];
+                    bMap.setPixel(x, y, palette[field2[x][y]]);
+                    continue;
+                }
+
+                if ( (field[x][y]+1) % MAX_COLOR == field[x2][y]) {
+                    field2[x][y] = field[x2][y];
+                    bMap.setPixel(x, y, palette[field2[x][y]]);
+                    continue;
+                }
+
+                y2 = y + 1;
+                if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
+                    field2[x][y] = field[x2][y2];
+                    bMap.setPixel(x, y, palette[field2[x][y]]);
+                    continue;
+                }
+
+                y2 = y - 1;
+                if ( (field[x][y]+1) % MAX_COLOR == field[x][y2]) {
+                    field2[x][y] = field[x][y2];
+                    bMap.setPixel(x, y, palette[field2[x][y]]);
+                    continue;
+                }
+
+                y2 = y + 1;
+                if ( (field[x][y]+1) % MAX_COLOR == field[x][y2]) {
+                    field2[x][y] = field[x][y2];
+                    bMap.setPixel(x, y, palette[field2[x][y]]);
+                    continue;
+                }
+
+                x2 = x + 1;
+                y2 = y - 1;
+                if (x2==width) x2 = 0;
+                if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
+                    field2[x][y] = field[x2][y2];
+                    bMap.setPixel(x, y, palette[field2[x][y]]);
+                    continue;
+                }
+
+                if ( (field[x][y]+1) % MAX_COLOR == field[x2][y]) {
+                    field2[x][y] = field[x2][y];
+                    bMap.setPixel(x, y, palette[field2[x][y]]);
+                    continue;
+                }
+
+                y2 = y + 1;
+                if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
+                    field2[x][y] = field[x2][y2];
+                    bMap.setPixel(x, y, palette[field2[x][y]]);
+                    continue;
                 }
             }
+            x2 = x - 1;
+            y2 = height-2;
+            if (x2<0) x2 = width - 1;
+            if ((field[x][height-1]+1) % MAX_COLOR == field[x2][y2]) {
+                field2[x][height-1] = field[x2][y2];
+                bMap.setPixel(x, height-1, palette[field2[x][height-1]]);
+                continue;
+            }
+
+            if ( (field[x][height-1]+1) % MAX_COLOR == field[x2][height-1]) {
+                field2[x][height-1] = field[x2][height-1];
+                bMap.setPixel(x, height-1, palette[field2[x][height-1]]);
+                continue;
+            }
+
+            y2 = 0;
+            if ( (field[x][height-1]+1) % MAX_COLOR == field[x2][y2]) {
+                field2[x][height-1] = field[x2][y2];
+                bMap.setPixel(x, height-1, palette[field2[x][height-1]]);
+                continue;
+            }
+
+            y2 = height-2;
+            if ( (field[x][height-1]+1) % MAX_COLOR == field[x][y2]) {
+                field2[x][height-1] = field[x][y2];
+                bMap.setPixel(x, height-1, palette[field2[x][height-1]]);
+                continue;
+            }
+
+            y2 = 0;
+            if ( (field[x][height-1]+1) % MAX_COLOR == field[x][y2]) {
+                field2[x][height-1] = field[x][y2];
+                bMap.setPixel(x, height-1, palette[field2[x][height-1]]);
+                continue;
+            }
+
+            x2 = x + 1;
+            y2 = height-2;
+            if (x2==width) x2 = 0;
+            if ( (field[x][height-1]+1) % MAX_COLOR == field[x2][y2]) {
+                field2[x][height-1] = field[x2][y2];
+                bMap.setPixel(x, height-1, palette[field2[x][height-1]]);
+                continue;
+            }
+
+            if ( (field[x][height-1]+1) % MAX_COLOR == field[x2][height-1]) {
+                field2[x][height-1] = field[x2][height-1];
+                bMap.setPixel(x, height-1, palette[field2[x][height-1]]);
+                continue;
+            }
+
+            y2 = 0;
+            if ( (field[x][height-1]+1) % MAX_COLOR == field[x2][y2]) {
+                field2[x][height-1] = field[x2][y2];
+                bMap.setPixel(x, height-1, palette[field2[x][height-1]]);
+            }
         }
-        field = field2;
+
     }
 
     @Override
-    public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+    public void draw(Canvas canvas) {
+        for(int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                field[i][j] = field2[i][j];
             }
         }
+        canvas.drawBitmap(bMap, null, dst, null);
     }
 }
