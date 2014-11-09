@@ -12,6 +12,7 @@ import java.util.Random;
 
 /**
  * Created by thevery on 11/09/14.
+ *
  */
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null, field2 = null;
@@ -45,23 +46,22 @@ class WhirlView extends SurfaceView implements Runnable {
         } catch (InterruptedException ignore) {}
     }
 
-    int clockSum = 0, clockCnt = 0;
-
     public void run() {
-        long startTime, finishTime;
+        long startTime, finishTime, t1;
         while (running) {
             if (holder.getSurface().isValid()) {
                 startTime = System.nanoTime();
                 updateField();
+                t1 = System.nanoTime();
                 Canvas canvas = holder.lockCanvas();
                 onDraw(canvas);
                 holder.unlockCanvasAndPost(canvas);
                 finishTime = System.nanoTime();
-                clockSum += (finishTime - startTime) / 1000000;
-                clockCnt++;
-                Log.i("TIME", "average time: " + clockSum / clockCnt);
+
+                Log.i("TIME", "cycle time: " + (finishTime - startTime) / 1000000 + "ms (" + (t1 - startTime) / 1000000 + "ms for updating field)");
+                // 45ms to updating, 10ms for drawing (on device explay alto with screen resolution 480x800)
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(15);
                 } catch (InterruptedException ignore) {}
             }
         }
@@ -76,6 +76,7 @@ class WhirlView extends SurfaceView implements Runnable {
         colors = new int[width * height];
         field  = new int[width][height];
         field2 = new int[width][height];
+
         Random rand = new Random();
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
@@ -83,26 +84,46 @@ class WhirlView extends SurfaceView implements Runnable {
             }
         }
     }
+    void updatePoint(int x, int y) {
+        int color = field[x][y] + 1;
+        if (color == MAX_COLOR) color = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            int x2 = x + dx;
+            if (x2 < 0) x2 += width;
+            if (x2 >= width)  x2 -= width;
+            for (int dy = -1; dy <= 1; dy++) {
+                int y2 = y + dy;
+                if (y2 < 0) y2 += height;
+                if (y2 >= height) y2 -= height;
 
+                if (color == field[x2][y2]) {
+                    field2[x][y] = field[x2][y2];
+                }
+            }
+        }
+    }
     void updateField() {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                field2[x][y] = field[x][y];
-                int color = (field[x][y]+1) % MAX_COLOR;
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
+        for (int x = 1; x < width - 1; x++) {
+            for (int y = 1; y < height - 1; y++) {
+                int color = field[x][y] + 1;
+                if (color == MAX_COLOR) color = 0;
+
+                for (int x2 = x - 1; x2 <= x + 1; x2++) {
+                    for (int y2 = y - 1; y2 <= y + 1; y2++) {
                         if (color == field[x2][y2]) {
-                            field2[x][y] = field[x2][y2];
+                            field2[x][y]= field[x2][y2];
                         }
                     }
                 }
             }
+        }
+        for (int x = 0; x < width; x++) {
+            updatePoint(x, 0);
+            updatePoint(x, height - 1);
+        }
+        for (int y = 0; y < height; y++) {
+            updatePoint(0, y);
+            updatePoint(width - 1, y);
         }
 
         int[][] temp = field;
@@ -110,8 +131,8 @@ class WhirlView extends SurfaceView implements Runnable {
         field2 = temp;
 
         int next = 0;
-        for (int y=0; y<height; y++) {
-            for (int x=0; x<width; x++) {
+        for (int y = 0; y < height; y++) {
+            for (int x=0; x < width; x++) {
                 colors[next++] = palette[field[x][y]];
             }
         }
