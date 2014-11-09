@@ -59,7 +59,7 @@ class WhirlView extends SurfaceView implements Runnable {
                 finishTime = System.nanoTime();
 
                 Log.i("TIME", "cycle time: " + (finishTime - startTime) / 1000000 + "ms (" + (t1 - startTime) / 1000000 + "ms for updating field)");
-                // 45ms to updating, 10ms for drawing (on device explay alto with screen resolution 480x800)
+                // 45ms for updating, 10ms for drawing (on device explay alto with screen resolution 480x800)
                 try {
                     Thread.sleep(15);
                 } catch (InterruptedException ignore) {}
