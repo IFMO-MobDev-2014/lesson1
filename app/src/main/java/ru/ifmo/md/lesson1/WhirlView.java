@@ -105,7 +105,11 @@ class WhirlView extends SurfaceView implements Runnable {
                 }
             }
         }
-        field = field2;
+        for (int i = 0; i < width; i++){
+            for (int j = 0; j < height; ++j){
+                field[i][j] = field2[i][j];
+            }
+        }
     }
 
 
