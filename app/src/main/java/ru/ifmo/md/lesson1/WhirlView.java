@@ -16,13 +16,10 @@ import java.util.Random;
 */
 class WhirlView extends SurfaceView implements Runnable {
     final Bitmap.Config config = Bitmap.Config.RGB_565;
-    int[][] field;
-    int[][] field2;
+    int[][] field, field2, field3;
     int[] color;
     final int width = 320;
     final int height = 240;
-    //float scalex = 1;
-    //float scaley = 1;
     final int MAX_COLOR = 10;
     int[] palette = {0xFFFF0000, 0xFF800000, 0xFF808000, 0xFF008000, 0xFF00FF00, 0xFF008080, 0xFF0000FF, 0xFF000080, 0xFF800080, 0xFFFFFFFF};
     Paint paint;
@@ -80,6 +77,7 @@ class WhirlView extends SurfaceView implements Runnable {
     void initField() {
         field = new int[width][height];
         field2 = new int[width][height];
+        field3 = new int[width][height];
         color = new int[width * height];
         bitmap = Bitmap.createBitmap(width, height, config);
         for (int x = 0; x < width; x++) {
@@ -107,7 +105,9 @@ class WhirlView extends SurfaceView implements Runnable {
                 }
             }
         }
+        field3 = field;
         field = field2;
+        field2 = field3;
     }
 
     @Override
