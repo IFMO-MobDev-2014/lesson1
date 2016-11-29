@@ -77,20 +77,17 @@ class WhirlView extends SurfaceView implements Runnable {
 
     void updateField() {
         int[][] field2 = new int[width][height];
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        int x2, y2;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
 
                 field2[x][y] = field[x][y];
 
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
-                        int x2 = x + dx;
-                        int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        x2 = (x + dx + width) % width;
+                        y2 = (y + dy + height) % height;
+                        if ( (field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
                         }
                     }
@@ -102,11 +99,11 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
+        Paint paint = new Paint();
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+                canvas.drawRect(x * scale, y * scale, (x + 1) * scale, (y + 1) * scale, paint);
             }
         }
     }
