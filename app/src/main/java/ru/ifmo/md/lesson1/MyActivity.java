@@ -6,24 +6,29 @@ import android.os.Bundle;
 
 public class MyActivity extends Activity {
 
-    private WhirlView whirlView;
+    private MainThread mainThread;
+    //private UpdateThread updateThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        whirlView = new WhirlView(this);
+        WhirlView whirlView = new WhirlView(this);
+        mainThread = new MainThread(whirlView);
+        //updateThread = new UpdateThread(whirlView);
         setContentView(whirlView);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        whirlView.resume();
+        //updateThread.resume();
+        mainThread.resume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        whirlView.pause();
+        //updateThread.pause();
+        mainThread.pause();
     }
 }
