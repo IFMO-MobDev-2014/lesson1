@@ -1,5 +1,6 @@
 package ru.ifmo.md.lesson1;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -10,10 +11,11 @@ import android.view.SurfaceView;
 import java.util.Random;
 
 /**
-* Created by thevery on 11/09/14.
-*/
+ * Created by pinguinson on 13/09/14.
+ */
 class WhirlView extends SurfaceView implements Runnable {
     int [][] field = null;
+    boolean [][] changed;
     int width = 0;
     int height = 0;
     int scale = 4;
@@ -22,10 +24,14 @@ class WhirlView extends SurfaceView implements Runnable {
     SurfaceHolder holder;
     Thread thread = null;
     volatile boolean running = false;
+    Paint paint = new Paint();
 
     public WhirlView(Context context) {
         super(context);
         holder = getHolder();
+        if (!isInEditMode()) {
+            setLayerType(SurfaceView.LAYER_TYPE_HARDWARE, null);
+        }
     }
 
     public void resume() {
@@ -41,6 +47,7 @@ class WhirlView extends SurfaceView implements Runnable {
         } catch (InterruptedException ignore) {}
     }
 
+    @SuppressLint("WrongCall")
     public void run() {
         while (running) {
             if (holder.getSurface().isValid()) {
@@ -60,39 +67,45 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onSizeChanged(int w, int h, int oldW, int oldH) {
-        width = w/scale;
-        height = h/scale;
+        width  = w / scale;
+        height = h / scale;
         initField();
     }
 
     void initField() {
-        field = new int[width][height];
+        field   = new int       [width][height];
+        changed = new boolean   [width][height];
         Random rand = new Random();
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 field[x][y] = rand.nextInt(MAX_COLOR);
+                changed[x][y] = true;
             }
         }
     }
 
     void updateField() {
         int[][] field2 = new int[width][height];
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-
-                field2[x][y] = field[x][y];
-
-                for (int dx=-1; dx<=1; dx++) {
-                    for (int dy=-1; dy<=1; dy++) {
+        for (int x = 0; x < width; x++) {
+            System.arraycopy(field[x], 0, field2[x], 0, height);
+            for (int y = 0; y < height; y++) {
+                changed[x][y] = false;
+                for (int dx = 1; dx >= -1; dx--) {
+                    for (int dy = 1; dy >= -1; dy--) {
                         int x2 = x + dx;
                         int y2 = y + dy;
-                        if (x2<0) x2 += width;
-                        if (y2<0) y2 += height;
-                        if (x2>=width) x2 -= width;
-                        if (y2>=height) y2 -= height;
-                        if ( (field[x][y]+1) % MAX_COLOR == field[x2][y2]) {
+                        if (x2 < 0) x2 += width;
+                        if (y2 < 0) y2 += height;
+                        if (x2 >= width) x2 -= width;
+                        if (y2 >= height)y2 -= height;
+                        if ((field[x][y] + 1) % MAX_COLOR == field[x2][y2]) {
                             field2[x][y] = field[x2][y2];
+                            changed[x][y] = true;
+                            break;
                         }
+                    }
+                    if (changed[x][y]) {
+                        break;
                     }
                 }
             }
@@ -102,11 +115,12 @@ class WhirlView extends SurfaceView implements Runnable {
 
     @Override
     public void onDraw(Canvas canvas) {
-        for (int x=0; x<width; x++) {
-            for (int y=0; y<height; y++) {
-                Paint paint = new Paint();
-                paint.setColor(palette[field[x][y]]);
-                canvas.drawRect(x*scale, y*scale, (x+1)*scale, (y+1)*scale, paint);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                if (changed[x][y]) {
+                    paint.setColor(palette[field[x][y]]);
+                    canvas.drawRect(x * scale, y * scale, (x + 1) * scale, (y + 1) * scale, paint);
+                }
             }
         }
     }
