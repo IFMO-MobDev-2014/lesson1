@@ -1,15 +1,22 @@
 apply plugin: 'com.android.application'
-
 android {
+    signingConfigs {
+        config {
+            keyAlias 'key'
+            keyPassword '123456'
+            storeFile file('C:/Users/1/Documents/lesson1/key.jks')
+            storePassword '123456'
+        }
+    }
     compileSdkVersion 19
-    buildToolsVersion "20.0.0"
-
+    buildToolsVersion '20.0.0'
     defaultConfig {
-        applicationId "ru.ifmo.md.lesson1"
+        applicationId 'ru.ifmo.md.lesson1'
         minSdkVersion 15
         targetSdkVersion 19
         versionCode 1
-        versionName "1.0"
+        versionName '1.0'
+        signingConfig signingConfigs.config
     }
     buildTypes {
         release {
@@ -17,4 +24,8 @@ android {
 //            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    productFlavors {
+    }
+}
+dependencies {
 }
